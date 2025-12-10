@@ -55,6 +55,10 @@ Personaliza el comportamiento del script:
 | `DEVO_JSON_SOURCE` | URL de la API o ruta al archivo JSON | `https://cenfolic.com/wordpress/wp-json/wp/v2/posts` |
 | `DEVO_TEMPLATE_PATH` | Ruta al template HTML | `./devocional-template_placeholders.html` |
 | `DEVO_OUTPUT_DIR` | Directorio de salida | `./output` |
+| `DEVO_GENERATE_IMAGES` | Generar imágenes PNG (`true`/`false`) | `false` |
+| `DEVO_IMAGE_WIDTH` | Ancho de las imágenes en píxeles | `1920` |
+| `DEVO_AUDIO_SERVER_URL` | URL del servidor de archivos de audio | `https://cenfolic.com/audio/devo/` |
+| `DEVO_DOWNLOAD_AUDIO` | Descargar archivos MP3 localmente (`true`/`false`) | `false` |
 
 **Ejemplos:**
 
@@ -62,18 +66,37 @@ Personaliza el comportamiento del script:
 # Usar archivo JSON local
 DEVO_JSON_SOURCE=demo-json.json node parse-devotional-json.js
 
+# Generar imágenes PNG (requiere: npm install puppeteer)
+DEVO_GENERATE_IMAGES=true node parse-devotional-json.js
+
+# Generar imágenes con ancho personalizado
+DEVO_GENERATE_IMAGES=true DEVO_IMAGE_WIDTH=1080 node parse-devotional-json.js
+
 # Usar API diferente
 DEVO_JSON_SOURCE=https://otro-sitio.com/wp-json/wp/v2/posts node parse-devotional-json.js
 
-# Cambiar directorio de salida
-DEVO_OUTPUT_DIR=./mis-devocionales node parse-devotional-json.js
+# Configurar servidor de audio personalizado
+DEVO_AUDIO_SERVER_URL=https://mi-servidor.com/audios/ node parse-devotional-json.js
+
+# Descargar archivos de audio localmente
+DEVO_DOWNLOAD_AUDIO=true node parse-devotional-json.js
+
+# Generar todo: HTML, imágenes PNG y descargar audios
+DEVO_GENERATE_IMAGES=true DEVO_DOWNLOAD_AUDIO=true node parse-devotional-json.js
 
 # Combinar variables
-DEVO_JSON_SOURCE=demo-json.json DEVO_OUTPUT_DIR=./test node parse-devotional-json.js
+DEVO_JSON_SOURCE=demo-json.json DEVO_GENERATE_IMAGES=true node parse-devotional-json.js
 ```
 
 **Resultado:**
 - ✅ Carpeta `output/` con archivos HTML individuales
+- ✅ Carpeta `output/` con imágenes PNG (si `DEVO_GENERATE_IMAGES=true`)
+- ✅ Carpeta `output/` con archivos MP3 (si `DEVO_DOWNLOAD_AUDIO=true`)
+
+**Requisitos para generar imágenes:**
+```bash
+npm install puppeteer
+```
 
 ## 📋 Publicar en Spotify
 

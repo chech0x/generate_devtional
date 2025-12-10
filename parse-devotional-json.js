@@ -6,6 +6,10 @@
  * - DEVO_JSON_SOURCE: URL de la API o ruta al archivo JSON (default: https://cenfolic.com/wordpress/wp-json/wp/v2/posts)
  * - DEVO_TEMPLATE_PATH: Ruta al template HTML (default: ./devocional-template_placeholders.html)
  * - DEVO_OUTPUT_DIR: Directorio de salida (default: ./output)
+ * - DEVO_GENERATE_IMAGES: Generar imágenes PNG (default: false, valores: true/false)
+ * - DEVO_IMAGE_WIDTH: Ancho de la imagen (default: 1920)
+ * - DEVO_AUDIO_SERVER_URL: URL del servidor de audio (default: https://cenfolic.com/audio/devo/)
+ * - DEVO_DOWNLOAD_AUDIO: Descargar archivos de audio localmente (default: false, valores: true/false)
  */
 
 const fs = require('fs');
@@ -13,13 +17,31 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 
+// Importar puppeteer solo si se necesita
+let puppeteer;
+const GENERATE_IMAGES = process.env.DEVO_GENERATE_IMAGES === 'true';
+if (GENERATE_IMAGES) {
+  try {
+    puppeteer = require('puppeteer');
+  } catch (error) {
+    console.warn('⚠️  Puppeteer no está instalado. Ejecuta: npm install puppeteer');
+    console.warn('⚠️  Se continuará sin generar imágenes.\n');
+  }
+}
+
 // ==========================================
 // CONFIGURACIÓN
 // ==========================================
+const DOWNLOAD_AUDIO = process.env.DEVO_DOWNLOAD_AUDIO === 'true';
+
 const CONFIG = {
   jsonSource: process.env.DEVO_JSON_SOURCE || 'https://cenfolic.com/wordpress/wp-json/wp/v2/posts',
   templatePath: process.env.DEVO_TEMPLATE_PATH || path.join(__dirname, 'devocional-template_placeholders.html'),
-  outputDir: process.env.DEVO_OUTPUT_DIR || path.join(__dirname, 'output')
+  outputDir: process.env.DEVO_OUTPUT_DIR || path.join(__dirname, 'output'),
+  generateImages: GENERATE_IMAGES && puppeteer !== undefined,
+  imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1920', 10),
+  audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || 'https://cenfolic.com/audio/devo/',
+  downloadAudio: DOWNLOAD_AUDIO
 };
 
 // ==========================================
@@ -66,6 +88,136 @@ function fetchJsonData(source) {
         reject(new Error(`Error leyendo archivo local: ${error.message}`));
       }
     }
+  });
+}
+
+/**
+ * Genera una imagen PNG desde el HTML usando Puppeteer
+ * Solo captura el elemento <article class="devocional">
+ */
+async function generateImageFromHtml(htmlContent, htmlFilePath, outputPath, width = 1920) {
+  if (!puppeteer) {
+    throw new Error('Puppeteer no está disponible');
+  }
+
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    // Configurar viewport con el ancho especificado
+    await page.setViewport({
+      width: width,
+      height: 1080,
+      deviceScaleFactor: 1
+    });
+
+    // Cargar el HTML desde el archivo para que las rutas relativas funcionen
+    const fileUrl = `file:///${htmlFilePath.replace(/\\/g, '/')}`;
+    await page.goto(fileUrl, {
+      waitUntil: 'networkidle0'
+    });
+
+    // Esperar a que el elemento article esté presente
+    await page.waitForSelector('article.devocional');
+
+    // Ocultar elementos con clase .no-screenshot (como el botón de descarga)
+    await page.evaluate(() => {
+      const elementsToHide = document.querySelectorAll('.no-screenshot');
+      elementsToHide.forEach(el => el.style.display = 'none');
+    });
+
+    // Tomar screenshot solo del elemento article
+    const element = await page.$('article.devocional');
+
+    if (!element) {
+      throw new Error('No se encontró el elemento <article class="devocional">');
+    }
+
+    await element.screenshot({
+      path: outputPath,
+      type: 'png'
+    });
+
+    return true;
+  } finally {
+    await browser.close();
+  }
+}
+
+/**
+ * Copia la carpeta images al directorio de salida
+ */
+function copyImagesFolder(outputDir) {
+  const imagesSource = path.join(__dirname, 'images');
+  const imagesDestination = path.join(outputDir, 'images');
+
+  // Verificar si existe la carpeta images
+  if (!fs.existsSync(imagesSource)) {
+    console.warn('⚠️  Carpeta images no encontrada, se omitirá la copia');
+    return;
+  }
+
+  // Crear carpeta images en output si no existe
+  if (!fs.existsSync(imagesDestination)) {
+    fs.mkdirSync(imagesDestination, { recursive: true });
+  }
+
+  // Copiar todos los archivos de la carpeta images
+  const files = fs.readdirSync(imagesSource);
+  files.forEach(file => {
+    const srcFile = path.join(imagesSource, file);
+    const destFile = path.join(imagesDestination, file);
+
+    if (fs.statSync(srcFile).isFile()) {
+      fs.copyFileSync(srcFile, destFile);
+    }
+  });
+
+  console.log(`📁 Carpeta images copiada a ${imagesDestination}`);
+}
+
+/**
+ * Descarga un archivo de audio desde el servidor remoto
+ */
+function downloadAudioFile(audioUrl, outputPath) {
+  return new Promise((resolve, reject) => {
+    const protocol = audioUrl.startsWith('https://') ? https : http;
+
+    protocol.get(audioUrl, (res) => {
+      // Si el archivo no existe (404), resolver sin error
+      if (res.statusCode === 404) {
+        resolve(false);
+        return;
+      }
+
+      // Si hay otro error HTTP, rechazar
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+
+      // Crear stream para escribir el archivo
+      const fileStream = fs.createWriteStream(outputPath);
+
+      res.pipe(fileStream);
+
+      fileStream.on('finish', () => {
+        fileStream.close();
+        resolve(true);
+      });
+
+      fileStream.on('error', (error) => {
+        fs.unlink(outputPath, () => {}); // Eliminar archivo parcial
+        reject(error);
+      });
+
+    }).on('error', (error) => {
+      reject(error);
+    });
   });
 }
 
@@ -278,23 +430,39 @@ function parseDevotional(postData, template) {
     console.log('📖 Iniciando parser de devocionales...\n');
     console.log(`⚙️  Fuente de datos: ${CONFIG.jsonSource}`);
     console.log(`⚙️  Template: ${CONFIG.templatePath}`);
-    console.log(`⚙️  Directorio de salida: ${CONFIG.outputDir}\n`);
+    console.log(`⚙️  Directorio de salida: ${CONFIG.outputDir}`);
+    console.log(`⚙️  Servidor de audio: ${CONFIG.audioServerUrl}`);
+    if (CONFIG.downloadAudio) {
+      console.log(`⚙️  Descarga de audio: Activada`);
+    }
+    if (CONFIG.generateImages) {
+      console.log(`⚙️  Generación de imágenes: Activada (${CONFIG.imageWidth}px de ancho)`);
+    }
+    console.log();
 
     // Crear directorio de salida si no existe
     if (!fs.existsSync(CONFIG.outputDir)) {
       fs.mkdirSync(CONFIG.outputDir, { recursive: true });
     }
 
+    // Copiar carpeta images al directorio de salida
+    copyImagesFolder(CONFIG.outputDir);
+
     // Obtener datos (desde URL o archivo local)
     const jsonData = await fetchJsonData(CONFIG.jsonSource);
 
-    // Leer template
-    const template = fs.readFileSync(CONFIG.templatePath, 'utf8');
+    // Leer template y reemplazar configuración global
+    let template = fs.readFileSync(CONFIG.templatePath, 'utf8');
+
+    // Si se descargan audios localmente, usar ruta relativa, sino usar servidor remoto
+    const audioBaseUrl = CONFIG.downloadAudio ? './' : CONFIG.audioServerUrl;
+    template = template.replace(/\{\{audio_server_url\}\}/g, audioBaseUrl);
 
     console.log(`✅ ${jsonData.length} devocionales encontrados\n`);
 
-    // Procesar cada devocional
-    jsonData.forEach((post, index) => {
+    // Procesar cada devocional (ahora de forma asíncrona para las imágenes)
+    for (let index = 0; index < jsonData.length; index++) {
+      const post = jsonData[index];
       try {
         console.log(`[${index + 1}/${jsonData.length}] Procesando: ${post.title.rendered}`);
 
@@ -306,14 +474,38 @@ function parseDevotional(postData, template) {
         const filename = `${dateSlug}.html`;
         const outputPath = path.join(CONFIG.outputDir, filename);
 
-        // Guardar archivo
+        // Guardar archivo HTML
         fs.writeFileSync(outputPath, html, 'utf8');
-        console.log(`   ✅ Guardado: ${filename}`);
+        console.log(`   ✅ HTML guardado: ${filename}`);
+
+        // Generar imagen si está habilitado
+        if (CONFIG.generateImages) {
+          const imagePath = path.join(CONFIG.outputDir, `${dateSlug}.png`);
+          console.log(`   🖼️  Generando imagen...`);
+          await generateImageFromHtml(html, outputPath, imagePath, CONFIG.imageWidth);
+          console.log(`   ✅ Imagen guardada: ${dateSlug}.png`);
+        }
+
+        // Descargar audio si está habilitado
+        if (CONFIG.downloadAudio) {
+          const audioFilename = `${dateSlug}.mp3`;
+          const audioUrl = `${CONFIG.audioServerUrl}${audioFilename}`;
+          const audioPath = path.join(CONFIG.outputDir, audioFilename);
+
+          console.log(`   🎵 Descargando audio...`);
+          const downloaded = await downloadAudioFile(audioUrl, audioPath);
+
+          if (downloaded) {
+            console.log(`   ✅ Audio guardado: ${audioFilename}`);
+          } else {
+            console.log(`   ⚠️  Audio no disponible en servidor`);
+          }
+        }
 
       } catch (error) {
         console.error(`   ❌ Error procesando "${post.title.rendered}":`, error.message);
       }
-    });
+    }
 
     console.log('\n🎉 ¡Proceso completado!');
     console.log(`📁 Archivos generados en: ${CONFIG.outputDir}`);

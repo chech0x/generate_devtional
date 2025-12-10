@@ -200,6 +200,105 @@
     }
 
     /* ============================================
+       BOTÓN DESCARGAR PNG
+       ============================================ */
+    .devocional__download-btn {
+      display: block;
+      margin: var(--espaciado-sm) auto;
+      padding: var(--espaciado-xs) var(--espaciado-md);
+      background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-primario-oscuro) 100%);
+      color: var(--color-blanco);
+      border: none;
+      border-radius: var(--radio-md);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--color-sombra-primario);
+      transition: all 0.3s ease;
+    }
+
+    .devocional__download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px var(--color-sombra-primario-suave);
+    }
+
+    .devocional__download-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Clase para ocultar elementos en capturas de pantalla y al imprimir */
+    @media print {
+      .no-screenshot {
+        display: none !important;
+      }
+    }
+
+    /* ============================================
+       REPRODUCTOR DE AUDIO
+       ============================================ */
+    .devocional__audio-player {
+      margin: var(--espaciado-md) var(--espaciado-xl);
+      background: white;
+      border: 2px solid var(--color-primario);
+      border-radius: var(--radio-lg);
+      padding: var(--espaciado-md);
+      box-shadow: 0 2px 8px var(--color-sombra);
+    }
+
+    .devocional__audio-loading {
+      text-align: center;
+      color: var(--color-texto-claro);
+      font-size: 0.875rem;
+      padding: var(--espaciado-sm);
+    }
+
+    .devocional__audio-loading::before {
+      content: "⏳";
+      display: inline-block;
+      margin-right: 0.5rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .devocional__audio-error {
+      text-align: center;
+      color: var(--color-texto-claro);
+      font-size: 0.875rem;
+      padding: var(--espaciado-sm);
+    }
+
+    .devocional__audio-controls {
+      display: none;
+    }
+
+    .devocional__audio-controls.loaded {
+      display: block;
+    }
+
+    .devocional__audio-controls audio {
+      width: 100%;
+      outline: none;
+    }
+
+    /* Personalización del audio player (navegadores webkit) */
+    .devocional__audio-controls audio::-webkit-media-controls-panel {
+      background-color: var(--color-blanco);
+    }
+
+    .devocional__audio-controls audio::-webkit-media-controls-play-button,
+    .devocional__audio-controls audio::-webkit-media-controls-pause-button {
+      background-color: var(--color-primario);
+      border-radius: 50%;
+    }
+
+    /* ============================================
        VERSÍCULO PRINCIPAL
        ============================================ */
     .devocional__versiculo-section {
@@ -512,9 +611,9 @@
 <article class="devocional">
   <!-- HEADER -->
   <header class="devocional__header">
-    <img 
-      src="../images/l02.jpg" 
-      alt="Amanecer sobre montañas" 
+    <img
+      src="images/l02.jpg"
+      alt="Amanecer sobre montañas"
       class="devocional__header-imagen"
     >
     <div class="devocional__header-overlay">
@@ -526,6 +625,27 @@
   <!-- CITA BÍBLICA BADGE -->
   <div class="devocional__cita-badge">
     {{verse_ref}}
+  </div>
+
+  <!-- BOTÓN DESCARGAR PNG -->
+  <button class="devocional__download-btn no-screenshot" onclick="downloadAsPNG()">
+    📥 Descargar como imagen
+  </button>
+
+  <!-- REPRODUCTOR DE AUDIO -->
+  <div class="devocional__audio-player no-screenshot" id="audioPlayer">
+    <div class="devocional__audio-loading" id="audioLoading">
+      Cargando audio...
+    </div>
+    <div class="devocional__audio-error" id="audioError" style="display: none;">
+      🔇 Audio no disponible
+    </div>
+    <div class="devocional__audio-controls" id="audioControls">
+      <audio controls preload="metadata" id="audioElement">
+        <source id="audioSource" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+      </audio>
+    </div>
   </div>
 
   <!-- FECHA -->
@@ -561,6 +681,125 @@
     © 2025 · Devocionales Diarios · Que tu día sea bendecido
   </footer>
 </article>
+
+<script>
+  // ============================================
+  // CONFIGURACIÓN
+  // ============================================
+  const AUDIO_SERVER_URL = '{{audio_server_url}}';
+
+  // ============================================
+  // CARGA DE AUDIO
+  // ============================================
+  async function loadAudio() {
+    const audioLoading = document.getElementById('audioLoading');
+    const audioError = document.getElementById('audioError');
+    const audioControls = document.getElementById('audioControls');
+    const audioSource = document.getElementById('audioSource');
+    const audioElement = document.getElementById('audioElement');
+
+    try {
+      // Obtener el nombre del archivo basado en la fecha
+      const currentPage = window.location.pathname.split('/').pop();
+      const audioFilename = currentPage.replace('.html', '.mp3');
+      const audioUrl = `${AUDIO_SERVER_URL}${audioFilename}`;
+
+      // Verificar si el audio existe
+      const response = await fetch(audioUrl, { method: 'HEAD' });
+
+      if (response.ok) {
+        // El audio existe, configurar el reproductor
+        audioSource.src = audioUrl;
+        audioElement.load();
+
+        // Mostrar controles cuando el audio esté listo
+        audioElement.addEventListener('loadedmetadata', () => {
+          audioLoading.style.display = 'none';
+          audioControls.classList.add('loaded');
+        });
+
+        // Manejar errores de carga
+        audioElement.addEventListener('error', () => {
+          audioLoading.style.display = 'none';
+          audioError.style.display = 'block';
+        });
+
+      } else {
+        // El audio no existe
+        audioLoading.style.display = 'none';
+        audioError.style.display = 'block';
+      }
+
+    } catch (error) {
+      console.error('Error al cargar audio:', error);
+      audioLoading.style.display = 'none';
+      audioError.style.display = 'block';
+    }
+  }
+
+  // Cargar el audio cuando la página esté lista
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadAudio);
+  } else {
+    loadAudio();
+  }
+
+  // ============================================
+  // DESCARGA DE IMAGEN
+  // ============================================
+  async function downloadAsPNG() {
+    const button = document.querySelector('.devocional__download-btn');
+
+    // Desactivar botón mientras se procesa
+    button.disabled = true;
+    button.textContent = '⏳ Descargando...';
+
+    try {
+      // Obtener el nombre del archivo PNG correspondiente
+      // Si el HTML se llama "2025-12-10.html", buscar "2025-12-10.png"
+      const currentPage = window.location.pathname.split('/').pop();
+      const pngFilename = currentPage.replace('.html', '.png');
+
+      // Intentar descargar el PNG que ya existe
+      const response = await fetch(pngFilename);
+
+      if (response.ok) {
+        // El PNG existe, descargarlo directamente
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = pngFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Restaurar botón
+        button.disabled = false;
+        button.textContent = '📥 Descargar como imagen';
+      } else {
+        // El PNG no existe, mostrar mensaje
+        throw new Error('IMAGE_NOT_FOUND');
+      }
+
+    } catch (error) {
+      console.error('Error al descargar imagen:', error);
+
+      if (error.message === 'IMAGE_NOT_FOUND') {
+        alert('⚠️ Imagen PNG no encontrada.\n\n' +
+              'Para generar las imágenes PNG, ejecuta:\n' +
+              'DEVO_GENERATE_IMAGES=true node parse-devotional-json.js');
+      } else {
+        alert('Error al descargar la imagen. Verifica que el archivo PNG existe en la misma carpeta.');
+      }
+
+      // Restaurar botón
+      button.disabled = false;
+      button.textContent = '📥 Descargar como imagen';
+    }
+  }
+</script>
 
 </body>
 </html>

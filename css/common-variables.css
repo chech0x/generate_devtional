@@ -1,0 +1,27 @@
+/* ============================================
+   VARIABLES COMUNES - Compartidas por todos los temas
+   ============================================ */
+:root {
+  /* Tipografía - Tamaños */
+  --font-size-titulo: clamp(2rem, 3vw, 1.25rem);
+  --font-size-referencia: clamp(1.2rem, 2.5vw, 0.95rem);
+  --font-size-versiculo: clamp(1.8rem, 3.5vw, 1.4rem);
+  --font-size-etiqueta: 0.9rem;
+  --font-size-texto: 1.2rem;
+  --font-size-accion-titulo: 1rem;
+
+  /* Tipografía - Colores */
+  --color-titulo: var(--color-acento);
+
+  /* Espaciado */
+  --espaciado-xs: 0.5rem;
+  --espaciado-sm: 1rem;
+  --espaciado-md: 1.5rem;
+  --espaciado-lg: 2rem;
+  --espaciado-xl: 3rem;
+
+  /* Border radius */
+  --radio-sm: 4px;
+  --radio-md: 8px;
+  --radio-lg: 12px;
+}

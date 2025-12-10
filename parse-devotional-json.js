@@ -95,7 +95,7 @@ function fetchJsonData(source) {
  * Genera una imagen PNG desde el HTML usando Puppeteer
  * Solo captura el elemento <article class="devocional">
  */
-async function generateImageFromHtml(htmlContent, htmlFilePath, outputPath, width = 1920) {
+async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920) {
   if (!puppeteer) {
     throw new Error('Puppeteer no está disponible');
   }
@@ -149,35 +149,49 @@ async function generateImageFromHtml(htmlContent, htmlFilePath, outputPath, widt
 }
 
 /**
- * Copia la carpeta images al directorio de salida
+ * Copia una carpeta al directorio de salida
  */
-function copyImagesFolder(outputDir) {
-  const imagesSource = path.join(__dirname, 'images');
-  const imagesDestination = path.join(outputDir, 'images');
+function copyFolder(folderName, outputDir) {
+  const source = path.join(__dirname, folderName);
+  const destination = path.join(outputDir, folderName);
 
-  // Verificar si existe la carpeta images
-  if (!fs.existsSync(imagesSource)) {
-    console.warn('⚠️  Carpeta images no encontrada, se omitirá la copia');
+  // Verificar si existe la carpeta
+  if (!fs.existsSync(source)) {
+    console.warn(`⚠️  Carpeta ${folderName} no encontrada, se omitirá la copia`);
     return;
   }
 
-  // Crear carpeta images en output si no existe
-  if (!fs.existsSync(imagesDestination)) {
-    fs.mkdirSync(imagesDestination, { recursive: true });
+  // Crear carpeta en output si no existe
+  if (!fs.existsSync(destination)) {
+    fs.mkdirSync(destination, { recursive: true });
   }
 
-  // Copiar todos los archivos de la carpeta images
-  const files = fs.readdirSync(imagesSource);
+  // Copiar todos los archivos de la carpeta
+  const files = fs.readdirSync(source);
   files.forEach(file => {
-    const srcFile = path.join(imagesSource, file);
-    const destFile = path.join(imagesDestination, file);
+    const srcFile = path.join(source, file);
+    const destFile = path.join(destination, file);
 
     if (fs.statSync(srcFile).isFile()) {
       fs.copyFileSync(srcFile, destFile);
     }
   });
 
-  console.log(`📁 Carpeta images copiada a ${imagesDestination}`);
+  console.log(`📁 Carpeta ${folderName} copiada a ${destination}`);
+}
+
+/**
+ * Copia la carpeta images al directorio de salida
+ */
+function copyImagesFolder(outputDir) {
+  copyFolder('images', outputDir);
+}
+
+/**
+ * Copia la carpeta css al directorio de salida
+ */
+function copyCssFolder(outputDir) {
+  copyFolder('css', outputDir);
 }
 
 /**
@@ -219,6 +233,15 @@ function downloadAudioFile(audioUrl, outputPath) {
       reject(error);
     });
   });
+}
+
+/**
+ * Elimina atributos style inline de las etiquetas HTML
+ */
+function removeInlineStyles(html) {
+  if (!html) return '';
+  // Remover atributos style de todas las etiquetas
+  return html.replace(/\s+style="[^"]*"/gi, '').replace(/\s+style='[^']*'/gi, '');
 }
 
 /**
@@ -401,16 +424,23 @@ function getDateFromUrl(url) {
 function parseDevotional(postData, template, dateSlug) {
   const content = postData.content.rendered;
 
+  // Calcular variante CSS basado en la fecha (mod 5 + 1)
+  const dateNumeric = parseInt(dateSlug.replace(/-/g, ''), 10); // "2025-12-10" -> 20251210
+  const cssVariantNumber = (dateNumeric % 5) + 1; // 0-4 -> 1-5
+  const cssVariant = cssVariantNumber.toString().padStart(2, '0'); // 1 -> "01"
+
   // Extraer datos
   const data = {
     verse_ref: extractBibleRef(content),
     date: formatDate(postData.date),
     verse_text: extractVerse(content),
-    devotional_title: stripHtml(postData.title.rendered),
+    devotional_title: removeInlineStyles(postData.title.rendered),
     biblical_treasure: extractBiblicalTreasure(content),
     call_to_action: extractCallToAction(content),
     audio_filename: `${dateSlug}.mp3`,
-    png_filename: `${dateSlug}.png`
+    png_filename: `${dateSlug}.png`,
+    css_variant: cssVariant,
+    cover_image: `l${cssVariant}.jpg`
   };
 
   // Reemplazar placeholders
@@ -447,8 +477,9 @@ function parseDevotional(postData, template, dateSlug) {
       fs.mkdirSync(CONFIG.outputDir, { recursive: true });
     }
 
-    // Copiar carpeta images al directorio de salida
+    // Copiar carpetas de dependencias al directorio de salida
     copyImagesFolder(CONFIG.outputDir);
+    copyCssFolder(CONFIG.outputDir);
 
     // Obtener datos (desde URL o archivo local)
     const jsonData = await fetchJsonData(CONFIG.jsonSource);
@@ -484,7 +515,7 @@ function parseDevotional(postData, template, dateSlug) {
         if (CONFIG.generateImages) {
           const imagePath = path.join(CONFIG.outputDir, `${dateSlug}.png`);
           console.log(`   🖼️  Generando imagen...`);
-          await generateImageFromHtml(html, outputPath, imagePath, CONFIG.imageWidth);
+          await generateImageFromHtml(outputPath, imagePath, CONFIG.imageWidth);
           console.log(`   ✅ Imagen guardada: ${dateSlug}.png`);
         }
 
@@ -494,13 +525,18 @@ function parseDevotional(postData, template, dateSlug) {
           const audioUrl = `${CONFIG.audioServerUrl}${audioFilename}`;
           const audioPath = path.join(CONFIG.outputDir, audioFilename);
 
-          console.log(`   🎵 Descargando audio...`);
-          const downloaded = await downloadAudioFile(audioUrl, audioPath);
-
-          if (downloaded) {
-            console.log(`   ✅ Audio guardado: ${audioFilename}`);
+          // Verificar si el archivo ya existe
+          if (fs.existsSync(audioPath)) {
+            console.log(`   ⏭️  Audio ya existe: ${audioFilename}`);
           } else {
-            console.log(`   ⚠️  Audio no disponible en servidor`);
+            console.log(`   🎵 Descargando audio...`);
+            const downloaded = await downloadAudioFile(audioUrl, audioPath);
+
+            if (downloaded) {
+              console.log(`   ✅ Audio guardado: ${audioFilename}`);
+            } else {
+              console.log(`   ⚠️  Audio no disponible en servidor`);
+            }
           }
         }
 

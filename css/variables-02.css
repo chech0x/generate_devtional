@@ -1,0 +1,38 @@
+/* ============================================
+   VARIABLES CSS - Personaliza aquí
+   ============================================ */
+:root {
+  /* Colores principales */
+  --color-primario: #2ecc71;
+  --color-primario-oscuro: #27ae60;
+  --color-primario-rgb: 57, 168, 218;
+  --color-secundario: #5A5F7A;
+  --color-acento: #003366;
+  --color-acento-rgb: 0, 51, 102;
+
+  /* Colores de texto */
+  --color-texto: #333333;
+  --color-texto-claro: #666666;
+
+  /* Colores de fondo */
+  --color-fondo: #f8f9fa;
+  --color-blanco: #FFFFFF;
+
+  /* Sombras */
+  --color-sombra: rgba(0, 0, 0, 0.1);
+  --color-sombra-fuerte: rgba(0, 0, 0, 0.2);
+  --color-sombra-texto: rgba(0, 0, 0, 0.4);
+  --color-sombra-primario: rgba(var(--color-primario-rgb), 0.3);
+  --color-sombra-primario-suave: rgba(var(--color-primario-rgb), 0.25);
+
+  /* Colores de overlay */
+  --color-overlay-inicio: rgba(var(--color-acento-rgb), 0.3);
+  --color-overlay-fin: rgba(var(--color-acento-rgb), 0.5);
+
+  /* Colores decorativos */
+  --color-comillas: var(--color-primario);
+  --color-separador: var(--color-fondo);
+  --color-flecha-accion: var(--color-primario);
+  --color-numero-lista: var(--color-blanco);
+  --color-fondo-numero-lista: var(--color-primario);
+}

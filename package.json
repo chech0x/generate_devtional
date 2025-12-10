@@ -1,0 +1,23 @@
+{
+  "name": "devocional-tools",
+  "version": "1.0.0",
+  "description": "Herramientas para generar RSS de podcast y parsear devocionales de WordPress",
+  "main": "index.js",
+  "scripts": {
+    "generate-rss": "node generate-podcast-rss.js",
+    "parse-json": "node parse-devotional-json.js",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [
+    "podcast",
+    "rss",
+    "devotional",
+    "wordpress",
+    "parser"
+  ],
+  "author": "Cenfolic",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

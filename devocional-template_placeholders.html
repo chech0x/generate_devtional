@@ -687,6 +687,8 @@
   // CONFIGURACIÓN
   // ============================================
   const AUDIO_SERVER_URL = '{{audio_server_url}}';
+  const AUDIO_FILENAME = '{{audio_filename}}';
+  const PNG_FILENAME = '{{png_filename}}';
 
   // ============================================
   // CARGA DE AUDIO
@@ -699,10 +701,8 @@
     const audioElement = document.getElementById('audioElement');
 
     try {
-      // Obtener el nombre del archivo basado en la fecha
-      const currentPage = window.location.pathname.split('/').pop();
-      const audioFilename = currentPage.replace('.html', '.mp3');
-      const audioUrl = `${AUDIO_SERVER_URL}${audioFilename}`;
+      // Construir URL del audio (generado estáticamente durante build)
+      const audioUrl = `${AUDIO_SERVER_URL}${AUDIO_FILENAME}`;
 
       // Verificar si el audio existe
       const response = await fetch(audioUrl, { method: 'HEAD' });
@@ -755,10 +755,8 @@
     button.textContent = '⏳ Descargando...';
 
     try {
-      // Obtener el nombre del archivo PNG correspondiente
-      // Si el HTML se llama "2025-12-10.html", buscar "2025-12-10.png"
-      const currentPage = window.location.pathname.split('/').pop();
-      const pngFilename = currentPage.replace('.html', '.png');
+      // Usar el nombre del archivo PNG generado estáticamente durante build
+      const pngFilename = PNG_FILENAME;
 
       // Intentar descargar el PNG que ya existe
       const response = await fetch(pngFilename);

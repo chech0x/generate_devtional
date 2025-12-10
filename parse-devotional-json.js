@@ -398,7 +398,7 @@ function getDateFromUrl(url) {
 // FUNCIÓN PRINCIPAL DE PARSEO
 // ==========================================
 
-function parseDevotional(postData, template) {
+function parseDevotional(postData, template, dateSlug) {
   const content = postData.content.rendered;
 
   // Extraer datos
@@ -408,7 +408,9 @@ function parseDevotional(postData, template) {
     verse_text: extractVerse(content),
     devotional_title: stripHtml(postData.title.rendered),
     biblical_treasure: extractBiblicalTreasure(content),
-    call_to_action: extractCallToAction(content)
+    call_to_action: extractCallToAction(content),
+    audio_filename: `${dateSlug}.mp3`,
+    png_filename: `${dateSlug}.png`
   };
 
   // Reemplazar placeholders
@@ -466,13 +468,13 @@ function parseDevotional(postData, template) {
       try {
         console.log(`[${index + 1}/${jsonData.length}] Procesando: ${post.title.rendered}`);
 
-        // Generar HTML
-        const html = parseDevotional(post, template);
-
         // Obtener fecha del URL para el nombre del archivo
         const dateSlug = getDateFromUrl(post.link) || post.slug;
         const filename = `${dateSlug}.html`;
         const outputPath = path.join(CONFIG.outputDir, filename);
+
+        // Generar HTML con nombres de archivos estáticos
+        const html = parseDevotional(post, template, dateSlug);
 
         // Guardar archivo HTML
         fs.writeFileSync(outputPath, html, 'utf8');

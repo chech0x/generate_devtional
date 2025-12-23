@@ -434,7 +434,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
 
   if (prevDevotional) {
     navigationHtml += `
-    <a href="${prevDevotional.htmlFile}" class="nav-button nav-button--prev">
+    <a href="${prevDevotional.htmlFile.replace('.html', '')}" class="nav-button nav-button--prev">
       <span class="nav-button__arrow">←</span>
       <div class="nav-button__content">
         <span class="nav-button__label">Anterior</span>
@@ -445,7 +445,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
 
   if (nextDevotional) {
     navigationHtml += `
-    <a href="${nextDevotional.htmlFile}" class="nav-button nav-button--next">
+    <a href="${nextDevotional.htmlFile.replace('.html', '')}" class="nav-button nav-button--next">
       <div class="nav-button__content">
         <span class="nav-button__label">Siguiente</span>
         <span class="nav-button__title">${nextDevotional.title}</span>

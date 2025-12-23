@@ -245,7 +245,7 @@
     // Crear una tarjeta de devocional
     function createDevotionalCard(devotional) {
       const card = document.createElement('a');
-      card.href = devotional.htmlFile;
+      card.href = devotional.htmlFile.replace('.html', '');
       card.className = 'devotional-card';
 
       card.innerHTML = `

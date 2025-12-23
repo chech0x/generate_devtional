@@ -549,14 +549,15 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     // Ordenar por fecha descendente
     const sortedMetadata = devotionalsMetadata.sort((a, b) => b.dateSlug.localeCompare(a.dateSlug));
 
-    // SEGUNDA PASADA: Generar HTML con navegación
+    // SEGUNDA PASADA: Generar HTML con navegación (en paralelo, lotes de 4)
     console.log('🔨 Generando archivos HTML...\n');
-    for (let index = 0; index < sortedMetadata.length; index++) {
-      const metadata = sortedMetadata[index];
+
+    // Función para procesar un devocional individual
+    const processDevotional = async (metadata, index, total) => {
       const post = metadata.post;
 
       try {
-        console.log(`[${index + 1}/${sortedMetadata.length}] Procesando: ${metadata.title}`);
+        console.log(`[${index + 1}/${total}] Procesando: ${metadata.title}`);
 
         const outputPath = path.join(CONFIG.outputDir, metadata.htmlFile);
 
@@ -603,6 +604,18 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
       } catch (error) {
         console.error(`   ❌ Error procesando "${post.title.rendered}":`, error.message);
       }
+    };
+
+    // Procesar en lotes de 4 en paralelo
+    const BATCH_SIZE = 4;
+    for (let i = 0; i < sortedMetadata.length; i += BATCH_SIZE) {
+      const batch = sortedMetadata.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map((metadata, batchIndex) => {
+        const globalIndex = i + batchIndex;
+        return processDevotional(metadata, globalIndex, sortedMetadata.length);
+      });
+
+      await Promise.all(batchPromises);
     }
 
     // Guardar archivo de metadata JSON ordenado por fecha descendente

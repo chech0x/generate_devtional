@@ -421,13 +421,38 @@ function getDateFromUrl(url) {
 // FUNCIÓN PRINCIPAL DE PARSEO
 // ==========================================
 
-function parseDevotional(postData, template, dateSlug) {
+function parseDevotional(postData, template, dateSlug, prevDevotional = null, nextDevotional = null) {
   const content = postData.content.rendered;
 
-  // Calcular variante CSS basado en la fecha (mod 5 + 1)
+  // Calcular variante CSS basado en la fecha (mod 7 + 1)
   const dateNumeric = parseInt(dateSlug.replace(/-/g, ''), 10); // "2025-12-10" -> 20251210
-  const cssVariantNumber = (dateNumeric % 5) + 1; // 0-4 -> 1-5
+  const cssVariantNumber = (dateNumeric % 7) + 1; // 0-6 -> 1-7
   const cssVariant = cssVariantNumber.toString().padStart(2, '0'); // 1 -> "01"
+
+  // Generar HTML de navegación
+  let navigationHtml = '';
+
+  if (prevDevotional) {
+    navigationHtml += `
+    <a href="${prevDevotional.htmlFile}" class="nav-button nav-button--prev">
+      <span class="nav-button__arrow">←</span>
+      <div class="nav-button__content">
+        <span class="nav-button__label">Anterior</span>
+        <span class="nav-button__title">${prevDevotional.title}</span>
+      </div>
+    </a>`;
+  }
+
+  if (nextDevotional) {
+    navigationHtml += `
+    <a href="${nextDevotional.htmlFile}" class="nav-button nav-button--next">
+      <div class="nav-button__content">
+        <span class="nav-button__label">Siguiente</span>
+        <span class="nav-button__title">${nextDevotional.title}</span>
+      </div>
+      <span class="nav-button__arrow">→</span>
+    </a>`;
+  }
 
   // Extraer datos
   const data = {
@@ -440,7 +465,8 @@ function parseDevotional(postData, template, dateSlug) {
     audio_filename: `${dateSlug}.mp3`,
     png_filename: `${dateSlug}.png`,
     css_variant: cssVariant,
-    cover_image: `l${cssVariant}.jpg`
+    cover_image: `banner${cssVariant}.png`,
+    prev_next_navigation: navigationHtml
   };
 
   // Reemplazar placeholders
@@ -493,35 +519,69 @@ function parseDevotional(postData, template, dateSlug) {
 
     console.log(`✅ ${jsonData.length} devocionales encontrados\n`);
 
-    // Procesar cada devocional (ahora de forma asíncrona para las imágenes)
+    // Array para almacenar metadata de los devocionales
+    const devotionalsMetadata = [];
+
+    // PRIMERA PASADA: Recopilar metadata de todos los devocionales
+    console.log('📋 Recopilando metadata...\n');
     for (let index = 0; index < jsonData.length; index++) {
       const post = jsonData[index];
+      const dateSlug = getDateFromUrl(post.link) || post.slug;
+      const filename = `${dateSlug}.html`;
+      const content = post.content.rendered;
+      const dateNumeric = parseInt(dateSlug.replace(/-/g, ''), 10);
+      const cssVariantNumber = (dateNumeric % 7) + 1;
+      const cssVariant = cssVariantNumber.toString().padStart(2, '0');
+
+      devotionalsMetadata.push({
+        post: post,
+        date: formatDate(post.date),
+        dateSlug: dateSlug,
+        title: removeInlineStyles(post.title.rendered),
+        verseRef: extractBibleRef(content),
+        verseText: extractVerse(content),
+        htmlFile: filename,
+        bannerImage: `banner${cssVariant}.png`,
+        cssVariant: cssVariant
+      });
+    }
+
+    // Ordenar por fecha descendente
+    const sortedMetadata = devotionalsMetadata.sort((a, b) => b.dateSlug.localeCompare(a.dateSlug));
+
+    // SEGUNDA PASADA: Generar HTML con navegación
+    console.log('🔨 Generando archivos HTML...\n');
+    for (let index = 0; index < sortedMetadata.length; index++) {
+      const metadata = sortedMetadata[index];
+      const post = metadata.post;
+
       try {
-        console.log(`[${index + 1}/${jsonData.length}] Procesando: ${post.title.rendered}`);
+        console.log(`[${index + 1}/${sortedMetadata.length}] Procesando: ${metadata.title}`);
 
-        // Obtener fecha del URL para el nombre del archivo
-        const dateSlug = getDateFromUrl(post.link) || post.slug;
-        const filename = `${dateSlug}.html`;
-        const outputPath = path.join(CONFIG.outputDir, filename);
+        const outputPath = path.join(CONFIG.outputDir, metadata.htmlFile);
 
-        // Generar HTML con nombres de archivos estáticos
-        const html = parseDevotional(post, template, dateSlug);
+        // Determinar devocional anterior y siguiente
+        const prevDevotional = index < sortedMetadata.length - 1 ? sortedMetadata[index + 1] : null;
+        const nextDevotional = index > 0 ? sortedMetadata[index - 1] : null;
+
+        // Generar HTML con navegación
+        const html = parseDevotional(post, template, metadata.dateSlug, prevDevotional, nextDevotional);
 
         // Guardar archivo HTML
         fs.writeFileSync(outputPath, html, 'utf8');
-        console.log(`   ✅ HTML guardado: ${filename}`);
+        console.log(`   ✅ HTML guardado: ${metadata.htmlFile}`);
 
         // Generar imagen si está habilitado
         if (CONFIG.generateImages) {
-          const imagePath = path.join(CONFIG.outputDir, `${dateSlug}.png`);
+          const imagePath = path.join(CONFIG.outputDir, `${metadata.dateSlug}.png`);
           console.log(`   🖼️  Generando imagen...`);
           await generateImageFromHtml(outputPath, imagePath, CONFIG.imageWidth);
-          console.log(`   ✅ Imagen guardada: ${dateSlug}.png`);
+          console.log(`   ✅ Imagen guardada: ${metadata.dateSlug}.png`);
         }
 
         // Descargar audio si está habilitado
         if (CONFIG.downloadAudio) {
-          const audioFilename = `${dateSlug}.mp3`;
+          const audioFilename = `${metadata.dateSlug}.mp3`;
           const audioUrl = `${CONFIG.audioServerUrl}${audioFilename}`;
           const audioPath = path.join(CONFIG.outputDir, audioFilename);
 
@@ -543,6 +603,32 @@ function parseDevotional(postData, template, dateSlug) {
       } catch (error) {
         console.error(`   ❌ Error procesando "${post.title.rendered}":`, error.message);
       }
+    }
+
+    // Guardar archivo de metadata JSON ordenado por fecha descendente
+    const metadataPath = path.join(CONFIG.outputDir, 'devotionals-metadata.json');
+    // Crear copia de metadata sin el objeto post para el JSON
+    const metadataForJson = sortedMetadata.map(m => ({
+      date: m.date,
+      dateSlug: m.dateSlug,
+      title: m.title,
+      verseRef: m.verseRef,
+      verseText: m.verseText,
+      htmlFile: m.htmlFile,
+      bannerImage: m.bannerImage,
+      cssVariant: m.cssVariant
+    }));
+    fs.writeFileSync(metadataPath, JSON.stringify(metadataForJson, null, 2), 'utf8');
+    console.log(`\n✅ Metadata guardada: devotionals-metadata.json`);
+
+    // Generar index.html desde el template
+    const indexTemplatePath = path.join(__dirname, 'index-template.html');
+    if (fs.existsSync(indexTemplatePath)) {
+      let indexTemplate = fs.readFileSync(indexTemplatePath, 'utf8');
+      indexTemplate = indexTemplate.replace('{{DEVOTIONALS_JSON}}', JSON.stringify(metadataForJson, null, 2));
+      const indexOutputPath = path.join(CONFIG.outputDir, 'index.html');
+      fs.writeFileSync(indexOutputPath, indexTemplate, 'utf8');
+      console.log(`✅ Index.html generado`);
     }
 
     console.log('\n🎉 ¡Proceso completado!');

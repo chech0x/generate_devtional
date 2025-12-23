@@ -292,8 +292,8 @@ function extractVerse(content) {
   const blockquoteMatch = content.match(/<blockquote[^>]*>(.*?)<\/blockquote>/is);
   if (blockquoteMatch) {
     let verse = stripHtml(blockquoteMatch[1]);
-    // Remover la cita bíblica del texto
-    verse = verse.replace(/([1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:-\d+)?\s*\([A-Z]+\))/g, '').trim();
+    // Remover la cita bíblica del texto (puede estar pegada sin espacio, acepta - o –, versiones con números)
+    verse = verse.replace(/\s*[1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:[-–]\d+)?(?:,\s*\d+(?:[-–]\d+)?)?\s*[,.]?\s*\([A-Z0-9]+\)/g, '').trim();
     return verse;
   }
 
@@ -301,7 +301,7 @@ function extractVerse(content) {
   const pullquoteMatch = content.match(/<figure[^>]*class="wp-block-pullquote"[^>]*>(.*?)<\/figure>/is);
   if (pullquoteMatch) {
     let verse = stripHtml(pullquoteMatch[1]);
-    verse = verse.replace(/([1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:-\d+)?\s*\([A-Z]+\))/g, '').trim();
+    verse = verse.replace(/\s*[1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:[-–]\d+)?(?:,\s*\d+(?:[-–]\d+)?)?\s*[,.]?\s*\([A-Z0-9]+\)/g, '').trim();
     return verse;
   }
 

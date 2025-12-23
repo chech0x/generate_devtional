@@ -275,8 +275,8 @@ function extractBibleRef(content) {
     return stripHtml(citeMatch[1]);
   }
 
-  // Buscar patrones como "1 Juan 5:11-13 (NTV)"
-  const refMatch = content.match(/([1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:-\d+)?(?:,\s*\d+(?:-\d+)?)*\s*\([A-Z]+\))/);
+  // Buscar patrones como "1 Juan 5:11-13 (NTV)" o "Salmo 23:1 (RVR1960)"
+  const refMatch = content.match(/([1-3]?\s*[A-Za-záéíóúÁÉÍÓÚñÑ]+\s+\d+:\d+(?:[-–]\d+)?(?:,\s*\d+(?:[-–]\d+)?)*\s*[,.]?\s*\([A-Z0-9]+\))/);
   if (refMatch) {
     return refMatch[1];
   }

@@ -35,4 +35,12 @@
   --color-flecha-accion: var(--color-primario);
   --color-numero-lista: var(--color-blanco);
   --color-fondo-numero-lista: var(--color-primario);
+
+  /* Banner (Header) */
+  --banner-title-color: #ffffff;
+  --banner-subtitle-color: rgba(15, 23, 42, 0.62);
+  --banner-title-shadow-color: rgba(0, 0, 0, 0.25);
+  --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.20);
+  --banner-subtitle-shadow-color: rgba(255, 255, 255, 0.22);
+  --banner-text-offset-y: 0px;
 }

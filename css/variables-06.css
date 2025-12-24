@@ -5,7 +5,7 @@
   /* Colores principales */
   --color-primario: #e74c3c;
   --color-primario-oscuro: #c0392b;
-  --color-primario-rgb: 57, 168, 218;
+  --color-primario-rgb: 231, 76, 60;
   --color-secundario: #5A5F7A;
   --color-acento: #003366;
   --color-acento-rgb: 0, 51, 102;
@@ -35,4 +35,12 @@
   --color-flecha-accion: var(--color-primario);
   --color-numero-lista: var(--color-blanco);
   --color-fondo-numero-lista: var(--color-primario);
+
+  /* Banner (Header) */
+  --banner-title-color: #ffffff;
+  --banner-subtitle-color: #C18A55;
+  --banner-title-shadow-color: rgba(0, 0, 0, 0.26);
+  --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.22);
+  --banner-subtitle-shadow-color: rgba(0, 0, 0, 0.20);
+  --banner-text-offset-y: 0px;
 }

@@ -195,6 +195,13 @@ function copyCssFolder(outputDir) {
 }
 
 /**
+ * Copia la carpeta fonts al directorio de salida
+ */
+function copyFontsFolder(outputDir) {
+  copyFolder('fonts', outputDir);
+}
+
+/**
  * Descarga un archivo de audio desde el servidor remoto
  */
 function downloadAudioFile(audioUrl, outputPath) {
@@ -429,6 +436,8 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
   const cssVariantNumber = (dateNumeric % 7) + 1; // 0-6 -> 1-7
   const cssVariant = cssVariantNumber.toString().padStart(2, '0'); // 1 -> "01"
 
+  const coverImage = `devo-${cssVariant}.jpg`;
+
   // Generar HTML de navegación
   let navigationHtml = '';
 
@@ -465,7 +474,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     audio_filename: `${dateSlug}.mp3`,
     png_filename: `${dateSlug}.png`,
     css_variant: cssVariant,
-    cover_image: `banner${cssVariant}.png`,
+    cover_image: coverImage,
     prev_next_navigation: navigationHtml
   };
 
@@ -506,6 +515,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     // Copiar carpetas de dependencias al directorio de salida
     copyImagesFolder(CONFIG.outputDir);
     copyCssFolder(CONFIG.outputDir);
+    copyFontsFolder(CONFIG.outputDir);
 
     // Obtener datos (desde URL o archivo local)
     const jsonData = await fetchJsonData(CONFIG.jsonSource);
@@ -532,6 +542,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
       const dateNumeric = parseInt(dateSlug.replace(/-/g, ''), 10);
       const cssVariantNumber = (dateNumeric % 7) + 1;
       const cssVariant = cssVariantNumber.toString().padStart(2, '0');
+      const bannerImage = `devo-${cssVariant}.jpg`;
 
       devotionalsMetadata.push({
         post: post,
@@ -541,7 +552,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
         verseRef: extractBibleRef(content),
         verseText: extractVerse(content),
         htmlFile: filename,
-        bannerImage: `banner${cssVariant}.png`,
+        bannerImage: bannerImage,
         cssVariant: cssVariant
       });
     }

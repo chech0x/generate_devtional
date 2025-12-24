@@ -6,7 +6,6 @@
   <title>Devocional - Reflexión para cada día</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Poppins:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
 
   <!-- CSS Variables y Estilos -->
   <link rel="stylesheet" href="css/common-variables.css">
@@ -23,6 +22,12 @@
       alt="Amanecer sobre montañas"
       class="devocional__header-imagen"
     >
+    <div class="devocional__header-overlay" aria-hidden="true">
+      <div class="devocional__brand">
+        <div class="devocional__titulo">DEVOCIONAL</div>
+        <div class="devocional__subtitulo">REFLEXIÓN PARA CADA DÍA</div>
+      </div>
+    </div>
   </header>
 
   <!-- FECHA -->
@@ -87,7 +92,7 @@
   </section>
 
   <!-- NAVEGACIÓN -->
-  <nav class="devocional__navigation">
+  <nav class="devocional__navigation no-screenshot">
     {{prev_next_navigation}}
   </nav>
 
@@ -119,31 +124,24 @@
       // Construir URL del audio (generado estáticamente durante build)
       const audioUrl = `${AUDIO_SERVER_URL}${AUDIO_FILENAME}`;
 
-      // Verificar si el audio existe
-      const response = await fetch(audioUrl, { method: 'HEAD' });
+      audioError.style.display = 'none';
+      audioLoading.style.display = 'block';
 
-      if (response.ok) {
-        // El audio existe, configurar el reproductor
-        audioSource.src = audioUrl;
-        audioElement.load();
+      // Configurar el reproductor directamente
+      audioSource.src = audioUrl;
+      audioElement.load();
 
-        // Mostrar controles cuando el audio esté listo
-        audioElement.addEventListener('loadedmetadata', () => {
-          audioLoading.style.display = 'none';
-          audioControls.classList.add('loaded');
-        });
+      // Mostrar controles cuando el audio esté listo
+      audioElement.addEventListener('loadedmetadata', () => {
+        audioLoading.style.display = 'none';
+        audioControls.classList.add('loaded');
+      }, { once: true });
 
-        // Manejar errores de carga
-        audioElement.addEventListener('error', () => {
-          audioLoading.style.display = 'none';
-          audioError.style.display = 'block';
-        });
-
-      } else {
-        // El audio no existe
+      // Manejar errores de carga
+      audioElement.addEventListener('error', () => {
         audioLoading.style.display = 'none';
         audioError.style.display = 'block';
-      }
+      }, { once: true });
 
     } catch (error) {
       console.error('Error al cargar audio:', error);

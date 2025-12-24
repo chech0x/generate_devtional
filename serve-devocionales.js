@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n✅ Servidor iniciado en http://localhost:${PORT}`);
   console.log(`📁 Sirviendo archivos desde: ${OUTPUT_DIR}`);
   console.log(`\n💡 Abre http://localhost:${PORT} en tu navegador`);

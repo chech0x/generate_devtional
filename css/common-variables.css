@@ -13,6 +13,52 @@
   /* Tipografía - Colores */
   --color-titulo: var(--color-acento);
 
+  /* ============================================
+     Banner (Header) - Texto sobre imagen
+     ============================================ */
+  --banner-overlay-bg: none;
+
+  --banner-title-color: var(--color-blanco);
+  --banner-title-shadow-color: rgba(0, 0, 0, 0.18);
+  --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.22);
+  /* Banner font sizes (responsive SIN clamp) */
+  --banner-title-font-size: 3.8rem;
+  --banner-title-letter-spacing: 0.02em;
+  --banner-title-underline-height: 0px;
+  --banner-title-underline-color: currentColor;
+  --banner-title-underline-shadow-color: rgba(0, 0, 0, 0.18);
+  --banner-title-underline-offset: 0.08em;
+
+  --banner-subtitle-color: rgba(255, 255, 255, 0.95);
+  --banner-subtitle-shadow-color: rgba(0, 0, 0, 0.22);
+  --banner-subtitle-font-size: 1rem;
+  --banner-subtitle-letter-spacing: 0.28em;
+
+  --banner-text-offset-y: 0px;
+
+  /* Oscurecer un poco la imagen del banner para mejorar legibilidad del overlay */
+  --banner-image-scrim: rgba(0, 0, 0, 0.28);
+
+  /* ============================================
+     Devocional (contenido) - Estilo tipo "franjas"
+     Basado en tu captura: fecha + referencia en barras, versículo en bloque beige,
+     y etiquetas "TESORO BÍBLICO" / "PUNTO DE ACCIÓN" en barra.
+     ============================================ */
+  --devo-bar-fecha-bg: color-mix(in srgb, var(--color-primario) 38%, white);
+  --devo-bar-fecha-text: rgba(0, 0, 0, 0.85);
+
+  --devo-bar-referencia-bg: color-mix(in srgb, var(--color-primario) 70%, #f59e0b);
+  --devo-bar-referencia-text: rgba(0, 0, 0, 0.90);
+
+  --devo-versiculo-bg: color-mix(in srgb, var(--color-primario) 18%, #fff7db);
+  --devo-versiculo-text: rgba(0, 0, 0, 0.92);
+
+  --devo-etiqueta-bg: color-mix(in srgb, var(--color-primario) 78%, #b45309);
+  --devo-etiqueta-text: rgba(255, 255, 255, 0.94);
+
+  --devo-footer-bg: var(--devo-etiqueta-bg);
+  --devo-footer-text: rgba(255, 255, 255, 0.78);
+
   /* Espaciado */
   --espaciado-xs: 0.5rem;
   --espaciado-sm: 1rem;
@@ -24,4 +70,21 @@
   --radio-sm: 4px;
   --radio-md: 8px;
   --radio-lg: 12px;
+}
+
+/* ============================================
+   Banner - Responsive (sin clamp)
+   ============================================ */
+@media (max-width: 768px) {
+  :root {
+    --banner-title-font-size: 3.2rem;
+    --banner-subtitle-font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --banner-title-font-size: 1.7rem;
+    --banner-subtitle-font-size: 0.78rem;
+  }
 }

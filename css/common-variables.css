@@ -53,7 +53,7 @@
   --devo-versiculo-bg: color-mix(in srgb, var(--color-primario) 18%, #fff7db);
   --devo-versiculo-text: rgba(0, 0, 0, 0.92);
 
-  --devo-etiqueta-bg: color-mix(in srgb, var(--color-primario) 78%, #b45309);
+  --devo-etiqueta-bg: var(--devo-bar-referencia-bg);
   --devo-etiqueta-text: rgba(255, 255, 255, 0.94);
 
   --devo-footer-bg: var(--devo-etiqueta-bg);

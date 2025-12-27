@@ -43,4 +43,8 @@
   --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.20);
   --banner-subtitle-shadow-color: rgba(255, 255, 255, 0.20);
   --banner-text-offset-y: 0px;
+
+  /* Colores de referencia (claro y oscuro) */
+  --devo-bar-referencia-bg-claro: #9b59b6;
+  --devo-bar-referencia-bg-oscuro: #8e44ad;
 }

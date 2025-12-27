@@ -82,7 +82,7 @@ body {
 .devocional {
   max-width: 650px;
   margin: 0 auto;
-  background-color: var(--color-blanco);
+  background-color: var(--devo-bar-referencia-bg);
   box-shadow: 0 4px 20px var(--color-sombra);
 }
 
@@ -147,7 +147,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: var(--espaciado-md);
+  padding: 0;
   background: var(--banner-overlay-bg);
   transform: translateY(var(--banner-text-offset-y));
   z-index: 2;
@@ -160,53 +160,81 @@ body {
   color: var(--banner-title-color);
   letter-spacing: var(--banner-title-letter-spacing);
   text-transform: uppercase;
-  line-height: 0.92;
+  line-height: 0.9;
   text-shadow:
-    0 3px 0 var(--banner-title-shadow-color-strong),
-    0 18px 30px var(--banner-title-shadow-color);
-  margin-bottom: var(--espaciado-xs);
+    0 4px 0 var(--banner-title-shadow-color-strong),
+    0 20px 35px var(--banner-title-shadow-color);
+  margin-bottom: 0;
   position: relative;
   display: inline-block;
 }
 
 .devocional__titulo::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: var(--banner-title-underline-height);
-  bottom: calc(var(--banner-title-underline-offset) * -1);
-  background: var(--banner-title-underline-color);
-  box-shadow: 0 6px 16px var(--banner-title-underline-shadow-color);
-  border-radius: 999px;
+  content: none;
 }
 
-.devocional__subtitulo {
-  font-size: var(--banner-subtitle-font-size);
-  color: var(--banner-subtitle-color);
-  letter-spacing: var(--banner-subtitle-letter-spacing);
-  text-shadow: 0 2px 10px var(--banner-subtitle-shadow-color);
-  text-transform: uppercase;
-  font-weight: 500;
-  opacity: 0.98;
-}
 
 /* ============================================
-   CITA BÍBLICA (Badge)
+   REFERENCIA BÍBLICA Y SUBTÍTULO (Nueva sección combinada)
    ============================================ */
+.devocional__ref-subtitle-section {
+  background: var(--devo-bar-referencia-bg-claro);
+  padding: 1.8rem 2rem 2rem 2rem;
+  text-align: center;
+  padding-bottom: 1.5rem;
+  position: relative;
+  max-width: 90%;
+  margin: -20px auto 30px auto;
+  z-index: 10;
+}
+
+.devocional__ref-subtitle-section::before,
+.devocional__ref-subtitle-section::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: 0;
+  height: 0;
+  border-top: 30px solid var(--devo-bar-referencia-bg-oscuro);
+}
+
+.devocional__ref-subtitle-section::before {
+  left: 0;
+  border-left: 40px solid transparent;
+  border-right: 400px solid var(--devo-bar-referencia-bg-oscuro);
+}
+
+.devocional__ref-subtitle-section::after {
+  right: 0;
+  border-right: 40px solid transparent;
+  border-left: 400px solid var(--devo-bar-referencia-bg-oscuro);
+}
+
+.devocional__subtitulo-inline {
+  font-family: 'Lato', sans-serif;
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
+  font-weight: 400;
+  color: var(--color-blanco);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  opacity: 0.95;
+  margin-bottom: 0.5rem;
+}
+
 .devocional__cita-badge {
-  background: var(--devo-bar-referencia-bg);
-  color: var(--devo-bar-referencia-text);
+  background: transparent;
+  color: var(--color-blanco);
   font-family: 'Lato', sans-serif;
   font-weight: 900;
-  font-size: clamp(2.1rem, 6vw, 2.9rem);
+  font-size: clamp(2.2rem, 6vw, 3rem);
   text-align: center;
   text-transform: uppercase;
-  padding: 1.2rem var(--espaciado-xl);
+  padding: 0;
   margin: 0;
   border-radius: 0;
   position: relative;
   box-shadow: none;
+  letter-spacing: 0.02em;
 }
 
 /* Triángulos decorativos */
@@ -230,18 +258,27 @@ body {
    ============================================ */
 .devocional__fecha {
   text-align: center;
-  padding: 0.85rem var(--espaciado-xl);
   margin: 0;
-  background: var(--devo-bar-fecha-bg);
+  background: var(--devo-bar-referencia-bg);
+  position: relative;
+  z-index: 10;
 }
 
 .devocional__fecha-texto {
   font-family: 'Lato', sans-serif;
-  font-size: 0.95rem;
-  letter-spacing: 0.28em;
-  color: var(--devo-bar-fecha-text);
-  font-weight: 400;
+  font-size: clamp(0.85rem, 2.2vw, 1rem);
+  letter-spacing: 0.35em;
+  color: var(--color-texto);
+  font-weight: 700;
   text-transform: uppercase;
+  background-color: var(--color-blanco);
+  padding: 1rem var(--espaciado-xl);
+display: inline-block;
+}
+
+.devocional__main-content {
+  background-color: var(--color-blanco);
+padding-top: 2rem;
 }
 
 /* ============================================
@@ -249,8 +286,8 @@ body {
    ============================================ */
 .devocional__download-btn {
   display: block;
-  margin: var(--espaciado-sm) auto;
-  padding: var(--espaciado-xs) var(--espaciado-md);
+  margin: 1.5rem auto 0.8rem auto;
+  padding: 0.65rem 1.5rem;
   background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-primario-oscuro) 100%);
   color: var(--color-blanco);
   border: none;
@@ -285,7 +322,7 @@ body {
    REPRODUCTOR DE AUDIO
    ============================================ */
 .devocional__audio-player {
-  margin: var(--espaciado-md) var(--espaciado-xl);
+  margin: 1.5rem var(--espaciado-xl) 1.5rem var(--espaciado-xl);
   background: white;
   border: 2px solid var(--color-primario);
   border-radius: var(--radio-lg);
@@ -347,24 +384,26 @@ body {
    VERSÍCULO PRINCIPAL
    ============================================ */
 .devocional__versiculo-section {
-  background: var(--devo-versiculo-bg);
-  margin: 0;
+  background: var(--color-blanco);
+  /* margin: 0 var(--espaciado-xl); */
+  border: 20px solid var(--devo-bar-referencia-bg);
+  border-top: none;
   border-radius: 0;
-  padding: 2.2rem var(--espaciado-xl) 2.4rem var(--espaciado-xl);
+  padding: 2rem;
   box-shadow: none;
 }
 
 .devocional__versiculo {
   font-family: 'Lato', sans-serif;
-  font-size: clamp(2.2rem, 5.6vw, 3.1rem);
+  font-size: clamp(2.2rem, 5.5vw, 3.2rem);
   font-weight: 900;
-  font-style: italic;
-  color: var(--devo-versiculo-text);
+  font-style: normal;
+  color: var(--color-texto);
   background: transparent;
   padding: 0;
   border-radius: 0;
   text-align: left;
-  line-height: 1.25;
+  line-height: 1.2;
   margin-bottom: 0;
   position: relative;
 }
@@ -392,26 +431,26 @@ body {
 .devocional__etiqueta-badge {
   background: var(--devo-etiqueta-bg);
   color: var(--devo-etiqueta-text);
+  font-family: 'Lato', sans-serif;
+  font-size: 1.2rem;
   font-weight: 700;
-  font-size: 0.75rem;
-  text-align: left;
-  text-transform: uppercase;
   letter-spacing: 0.32em;
-  padding: 0.35rem var(--espaciado-xl);
+  text-transform: uppercase;
+  text-align: center;
   margin: 0;
-  border-radius: 0;
-  box-shadow: none;
+  padding: 0.8rem var(--espaciado-xl);
 }
 
 /* ============================================
    CONTENIDO
    ============================================ */
 .devocional__titulo-wrapper {
-  padding: var(--espaciado-sm) var(--espaciado-xl);
+  padding: 1.5rem var(--espaciado-xl) 1rem var(--espaciado-xl);
+  background: var(--color-blanco);
 }
 
 .devocional__contenido {
-  padding: 2rem var(--espaciado-xl);
+  padding: 1.5rem var(--espaciado-xl) 2rem var(--espaciado-xl);
 }
 
 .devocional__contenido p {
@@ -425,16 +464,16 @@ body {
 
 .devocional__contenido-titulo {
   font-family: 'Lato', sans-serif;
-  font-size: clamp(2rem, 4.6vw, 2.6rem);
+  font-size: clamp(1.85rem, 4.5vw, 2.5rem);
   font-weight: 900;
   color: var(--color-titulo);
-  text-align: left;
+  text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 0;
   position: static;
   padding-bottom: 0;
-  text-align: center;
+  line-height: 1.15;
 }
 
 .devocional__contenido-titulo::after {
@@ -504,13 +543,13 @@ body {
   background: var(--devo-etiqueta-bg);
   color: var(--devo-etiqueta-text);
   font-family: 'Lato', sans-serif;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: center;
   margin: 0;
-  padding: 0.35rem var(--espaciado-xl);
+  padding: 0.8rem var(--espaciado-xl);
 }
 
 .devocional__accion-contenido {
@@ -539,6 +578,8 @@ body {
   padding-left: var(--espaciado-md);
   position: relative;
   border-bottom: 1px solid var(--color-separador);
+  font-size: var(--font-size-texto);
+  line-height: 1.8;
 }
 
 .devocional__accion-contenido li:last-child {
@@ -647,29 +688,61 @@ body {
     object-fit: contain;
   }
 
-  .devocional__cita-badge {
-    margin: var(--espaciado-md) var(--espaciado-sm);
+  .devocional__ref-subtitle-section {
+    padding: 1.8rem var(--espaciado-md);
+    padding-bottom: 1.5rem;
+    margin: -50px auto 30px auto;
   }
 
+  
+
+  .devocional__subtitulo-inline {
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    letter-spacing: 0.35em;
+  }
+
+  .devocional__cita-badge {
+    font-size: clamp(1.9rem, 5.8vw, 2.6rem);
+  }
+
+
   .devocional__etiqueta-badge {
-    margin: var(--espaciado-md) var(--espaciado-sm);
+    padding: 0.7rem var(--espaciado-md);
+  }
+
+  .devocional__accion-titulo {
+    padding: 0.7rem var(--espaciado-md);
   }
 
   .devocional__versiculo-section {
-    margin: 0 var(--espaciado-sm);
+    padding: 2.5rem var(--espaciado-md);
+    margin: 0 var(--espaciado-md);
+    border-width: 3px;
+    border-top: none;
+  }
+
+  .devocional__versiculo {
+    font-size: clamp(1.9rem, 5.2vw, 2.8rem);
+  }
+
+  .devocional__audio-player {
+    margin: 0.9rem var(--espaciado-md) 1.2rem var(--espaciado-md);
   }
 
   .devocional__titulo-wrapper {
-    padding: var(--espaciado-sm) var(--espaciado-sm);
+    padding: 1.2rem var(--espaciado-md) 0.8rem var(--espaciado-md);
+  }
+
+  .devocional__contenido-titulo {
+    font-size: clamp(1.6rem, 4.2vw, 2.2rem);
   }
 
   .devocional__contenido {
-    padding: var(--espaciado-sm) var(--espaciado-sm) var(--espaciado-xl) var(--espaciado-sm);
+    padding: 1.2rem var(--espaciado-md) 1.5rem var(--espaciado-md);
   }
 
   .devocional__accion {
-    margin: 0 var(--espaciado-sm);
-    margin-bottom: var(--espaciado-sm);
+    margin: 0;
   }
 }
 
@@ -691,23 +764,78 @@ body {
     letter-spacing: 0.2em;
   }
 
+  .devocional__ref-subtitle-section {
+    padding: 1.8rem var(--espaciado-sm);
+    padding-bottom: 1.5rem;
+    margin: -50px auto 30px auto;
+  }
+
+  .devocional__ref-subtitle-section::before {
+    border-right: 200px solid var(--devo-bar-referencia-bg-oscuro);
+  }
+
+  .devocional__ref-subtitle-section::after {
+    border-left: 200px solid var(--devo-bar-referencia-bg-oscuro);
+  }
+
+  .devocional__subtitulo-inline {
+    font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+    letter-spacing: 0.3em;
+  }
+
   .devocional__cita-badge {
-    font-size: clamp(1.6rem, 7.2vw, 2.2rem);
-    padding: 1rem var(--espaciado-sm);
+    font-size: clamp(1.7rem, 7vw, 2.4rem);
+  }
+
+
+
+  .devocional__fecha-texto {
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    letter-spacing: 0.3em;
+    padding: 0.9rem var(--espaciado-sm);
   }
 
   .devocional__etiqueta-badge {
-    padding: 0.35rem var(--espaciado-sm);
-    font-size: 0.72rem;
+    padding: 0.6rem var(--espaciado-sm);
+    font-size: 1rem;
+  }
+
+  .devocional__accion-titulo {
+    padding: 0.6rem var(--espaciado-sm);
+    font-size: 1rem;
+  }
+
+  .devocional__versiculo-section {
+    padding: 2rem var(--espaciado-sm);
+    margin: 0 var(--espaciado-sm);
+    border-width: 3px;
+    border-top: none;
   }
 
   .devocional__versiculo {
-    padding: var(--espaciado-sm);
+    font-size: clamp(1.65rem, 5.8vw, 2.4rem);
   }
 
   .devocional__versiculo::before,
   .devocional__versiculo::after {
     font-size: 2rem;
+  }
+
+  .devocional__titulo-wrapper {
+    padding: 1rem var(--espaciado-sm) 0.6rem var(--espaciado-sm);
+  }
+
+  .devocional__contenido-titulo {
+    font-size: clamp(1.4rem, 4.2vw, 2rem);
+  }
+
+  .devocional__contenido,
+  .devocional__accion-contenido {
+    padding: 1rem var(--espaciado-sm) 1.2rem var(--espaciado-sm);
+  }
+
+  .devocional__audio-player {
+    margin: 0.7rem var(--espaciado-sm) 1rem var(--espaciado-sm);
   }
 
   .devocional__texto {

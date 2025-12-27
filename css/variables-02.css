@@ -47,4 +47,8 @@
   --banner-title-underline-shadow-color: rgba(0, 0, 0, 0.18);
   --banner-title-underline-offset: 0.10em;
   --banner-text-offset-y: 4px;
+
+  /* Colores de referencia (claro y oscuro) */
+  --devo-bar-referencia-bg-claro: #2ecc71;
+  --devo-bar-referencia-bg-oscuro: #27ae60;
 }

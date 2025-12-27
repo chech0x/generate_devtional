@@ -284,31 +284,54 @@ padding-top: 2rem;
 /* ============================================
    BOTÓN DESCARGAR PNG
    ============================================ */
-.devocional__download-btn {
-  display: block;
-  margin: 1.5rem auto 0.8rem auto;
-  padding: 0.65rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-primario-oscuro) 100%);
-  color: var(--color-blanco);
-  border: none;
+/* ============================================
+   CONTENEDOR DE ACCIONES (Descarga y Audio)
+   ============================================ */
+.devocional__actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 1.5rem var(--espaciado-xl) 1.5rem var(--espaciado-xl);
+  padding: 1rem;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-separador);
   border-radius: var(--radio-md);
+}
+
+.devocional__download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-blanco);
+  color: var(--color-texto);
+  border: 1px solid var(--color-separador);
+  border-radius: var(--radio-sm);
   font-family: 'Lato', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--color-sombra-primario);
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.devocional__download-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .devocional__download-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--color-sombra-primario-suave);
+  background: var(--color-fondo);
+  border-color: var(--color-texto-claro);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
 .devocional__download-btn:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 /* Clase para ocultar elementos en capturas de pantalla y al imprimir */
@@ -321,13 +344,34 @@ padding-top: 2rem;
 /* ============================================
    REPRODUCTOR DE AUDIO
    ============================================ */
+.devocional__audio-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.devocional__audio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-texto);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.devocional__audio-label svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .devocional__audio-player {
-  margin: 1.5rem var(--espaciado-xl) 1.5rem var(--espaciado-xl);
-  background: white;
-  border: 2px solid var(--color-primario);
-  border-radius: var(--radio-lg);
-  padding: var(--espaciado-md);
-  box-shadow: 0 2px 8px var(--color-sombra);
+  background: var(--color-blanco);
+  border: 1px solid var(--color-separador);
+  border-radius: var(--radio-sm);
+  padding: var(--espaciado-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .devocional__audio-loading {
@@ -725,8 +769,11 @@ padding-top: 2rem;
     font-size: clamp(1.9rem, 5.2vw, 2.8rem);
   }
 
-  .devocional__audio-player {
-    margin: 0.9rem var(--espaciado-md) 1.2rem var(--espaciado-md);
+  .devocional__actions {
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem var(--espaciado-md);
+    padding: 1rem;
   }
 
   .devocional__titulo-wrapper {
@@ -834,8 +881,15 @@ padding-top: 2rem;
     padding: 1rem var(--espaciado-sm) 1.2rem var(--espaciado-sm);
   }
 
-  .devocional__audio-player {
-    margin: 0.7rem var(--espaciado-sm) 1rem var(--espaciado-sm);
+  .devocional__actions {
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem var(--espaciado-sm);
+    padding: 0.8rem;
+  }
+  
+  .devocional__audio-section {
+    width: 100%;
   }
 
   .devocional__texto {

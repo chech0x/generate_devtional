@@ -59,45 +59,23 @@
   </div>
 
   <div class="devocional__main-content">
-<!-- CONTENEDOR DE ACCIONES (Descarga y Audio) -->
-<div class="devocional__actions no-screenshot">
-  <!-- BOTÓN DESCARGAR PNG -->
-  <button class="devocional__download-btn" onclick="downloadAsPNG()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-    <span>Descargar devocional</span>
-  </button>
-
   <!-- REPRODUCTOR DE AUDIO -->
-  <div class="devocional__audio-section">
-    <div class="devocional__audio-label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      </svg>
-      <span>Escuchar audio</span>
+  <div class="devocional__audio-player no-screenshot" id="audioPlayer">
+    <div class="devocional__audio-loading" id="audioLoading">
+      Cargando audio...
     </div>
-    <div class="devocional__audio-player" id="audioPlayer">
-  <div class="devocional__audio-loading" id="audioLoading">
-    Cargando audio...
+    <div class="devocional__audio-error" id="audioError" style="display: none;">
+      🔇 Audio no disponible
+    </div>
+    <div class="devocional__audio-controls" id="audioControls">
+      <audio controls preload="metadata" id="audioElement">
+        <source id="audioSource" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+      </audio>
+    </div>
   </div>
-  <div class="devocional__audio-error" id="audioError" style="display: none;">
-    🔇 Audio no disponible
-  </div>
-  <div class="devocional__audio-controls" id="audioControls">
-    <audio controls preload="metadata" id="audioElement">
-      <source id="audioSource" type="audio/mpeg">
-      Tu navegador no soporta el elemento de audio.
-    </audio>
-  </div>
-  </div>
-  </div>
-</div>
 
-<!-- TÍTULO DEL DEVOCIONAL -->
+  <!-- TÍTULO DEL DEVOCIONAL -->
 <div class="devocional__titulo-wrapper">
   <h2 class="devocional__contenido-titulo">{{devotional_title}}</h2>
 </div>
@@ -119,6 +97,31 @@
 <nav class="devocional__navigation no-screenshot">
   {{prev_next_navigation}}
 </nav>
+
+<!-- SECCIÓN DE ACCIONES -->
+<div class="devocional__actions no-screenshot">
+  <!-- BOTÓN DESCARGAR PNG -->
+  <button class="devocional__download-btn" onclick="downloadAsPNG()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    <span>Descargar devocional</span>
+  </button>
+
+  <!-- BOTÓN COMPARTIR -->
+  <button class="devocional__share-btn" onclick="shareDevotional()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+    </svg>
+    <span>Compartir</span>
+  </button>
+</div>
 
 <!-- FOOTER -->
 <footer class="devocional__footer">
@@ -234,7 +237,51 @@
 
       // Restaurar botón
       button.disabled = false;
-      button.textContent = '📥 Descargar como imagen';
+      button.innerHTML = originalHTML;
+    }
+  }
+
+  // ============================================
+  // COMPARTIR DEVOCIONAL
+  // ============================================
+  async function shareDevotional() {
+    const shareButton = document.querySelector('.devocional__share-btn');
+    const originalHTML = shareButton.innerHTML;
+
+    shareButton.disabled = true;
+    shareButton.innerHTML = '<span>Compartiendo...</span>';
+
+    try {
+      const url = window.location.href;
+      const title = document.querySelector('.devocional__contenido-titulo')?.textContent || 'Devocional';
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: title,
+          text: 'Comparte este devocional',
+          url: url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        alert('✅ Enlace copiado al portapapeles');
+      }
+
+      shareButton.disabled = false;
+      shareButton.innerHTML = originalHTML;
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error al compartir:', error);
+        
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('✅ Enlace copiado al portapapeles');
+        } catch (clipboardError) {
+          alert('❌ No se pudo compartir. Por favor, copia la URL manualmente.');
+        }
+      }
+
+      shareButton.disabled = false;
+      shareButton.innerHTML = originalHTML;
     }
   }
 </script>

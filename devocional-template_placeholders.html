@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/general.css">
 </head>
 <body>
+  
 
 <article class="devocional">
   <!-- TOP BAR -->
@@ -30,45 +31,19 @@
     <div class="devocional__header-overlay" aria-hidden="true">
       <div class="devocional__brand">
         <div class="devocional__titulo">DEVOCIONAL</div>
-        <div class="devocional__subtitulo">REFLEXIÓN PARA CADA DÍA</div>
       </div>
     </div>
   </header>
 
+  <!-- REFERENCIA BÍBLICA Y SUBTÍTULO -->
+  <div class="devocional__ref-subtitle-section">
+    <div class="devocional__subtitulo-inline">REFLEXIÓN PARA CADA DÍA</div>
+    <div class="devocional__cita-badge">{{verse_ref}}</div>
+  </div>
+
   <!-- FECHA -->
   <div class="devocional__fecha">
     <span class="devocional__fecha-texto">{{date}}</span>
-  </div>
-
-  <!-- TÍTULO DEL DEVOCIONAL -->
-  <div class="devocional__titulo-wrapper">
-    <h2 class="devocional__contenido-titulo">{{devotional_title}}</h2>
-  </div>
-
-  <!-- BOTÓN DESCARGAR PNG -->
-  <button class="devocional__download-btn no-screenshot" onclick="downloadAsPNG()">
-    📥 Descargar como imagen
-  </button>
-
-  <!-- REPRODUCTOR DE AUDIO -->
-  <div class="devocional__audio-player no-screenshot" id="audioPlayer">
-    <div class="devocional__audio-loading" id="audioLoading">
-      Cargando audio...
-    </div>
-    <div class="devocional__audio-error" id="audioError" style="display: none;">
-      🔇 Audio no disponible
-    </div>
-    <div class="devocional__audio-controls" id="audioControls">
-      <audio controls preload="metadata" id="audioElement">
-        <source id="audioSource" type="audio/mpeg">
-        Tu navegador no soporta el elemento de audio.
-      </audio>
-    </div>
-  </div>
-
-  <!-- CITA BÍBLICA BADGE -->
-  <div class="devocional__cita-badge">
-    {{verse_ref}}
   </div>
 
   <!-- VERSÍCULO PRINCIPAL -->
@@ -83,28 +58,74 @@
     Tesoro Bíblico
   </div>
 
-  <!-- CONTENIDO PRINCIPAL -->
-  <div class="devocional__contenido">
-    {{biblical_treasure}}
-  </div>
+  <div class="devocional__main-content">
+<!-- CONTENEDOR DE ACCIONES (Descarga y Audio) -->
+<div class="devocional__actions no-screenshot">
+  <!-- BOTÓN DESCARGAR PNG -->
+  <button class="devocional__download-btn" onclick="downloadAsPNG()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    <span>Descargar devocional</span>
+  </button>
 
-  <!-- PUNTO DE ACCIÓN -->
-  <section class="devocional__accion">
-    <h3 class="devocional__accion-titulo">Punto de Acción</h3>
-    <div class="devocional__accion-contenido">
-      {{call_to_action}}
+  <!-- REPRODUCTOR DE AUDIO -->
+  <div class="devocional__audio-section">
+    <div class="devocional__audio-label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <span>Escuchar audio</span>
     </div>
-  </section>
+    <div class="devocional__audio-player" id="audioPlayer">
+  <div class="devocional__audio-loading" id="audioLoading">
+    Cargando audio...
+  </div>
+  <div class="devocional__audio-error" id="audioError" style="display: none;">
+    🔇 Audio no disponible
+  </div>
+  <div class="devocional__audio-controls" id="audioControls">
+    <audio controls preload="metadata" id="audioElement">
+      <source id="audioSource" type="audio/mpeg">
+      Tu navegador no soporta el elemento de audio.
+    </audio>
+  </div>
+  </div>
+  </div>
+</div>
 
-  <!-- NAVEGACIÓN -->
-  <nav class="devocional__navigation no-screenshot">
-    {{prev_next_navigation}}
-  </nav>
+<!-- TÍTULO DEL DEVOCIONAL -->
+<div class="devocional__titulo-wrapper">
+  <h2 class="devocional__contenido-titulo">{{devotional_title}}</h2>
+</div>
 
-  <!-- FOOTER -->
-  <footer class="devocional__footer">
-    Devocionales Por Chafic Siade, con ayuda en recursos de estudio.
-  </footer>
+<!-- CONTENIDO PRINCIPAL -->
+<div class="devocional__contenido">
+  {{biblical_treasure}}
+</div>
+
+<!-- PUNTO DE ACCIÓN -->
+<section class="devocional__accion">
+  <h3 class="devocional__accion-titulo">Punto de Acción</h3>
+  <div class="devocional__accion-contenido">
+    {{call_to_action}}
+  </div>
+</section>
+
+<!-- NAVEGACIÓN -->
+<nav class="devocional__navigation no-screenshot">
+  {{prev_next_navigation}}
+</nav>
+
+<!-- FOOTER -->
+<footer class="devocional__footer">
+  Devocionales Por Chafic Siade, con ayuda en recursos de estudio.
+</footer>
+  </div>
+  
 </article>
 
 <script>
@@ -167,10 +188,11 @@
   // ============================================
   async function downloadAsPNG() {
     const button = document.querySelector('.devocional__download-btn');
+    const originalHTML = button.innerHTML;
 
     // Desactivar botón mientras se procesa
     button.disabled = true;
-    button.textContent = '⏳ Descargando...';
+    button.innerHTML = '<span>Descargando...</span>';
 
     try {
       // Usar el nombre del archivo PNG generado estáticamente durante build
@@ -193,7 +215,7 @@
 
         // Restaurar botón
         button.disabled = false;
-        button.textContent = '📥 Descargar como imagen';
+        button.innerHTML = originalHTML;
       } else {
         // El PNG no existe, mostrar mensaje
         throw new Error('IMAGE_NOT_FOUND');

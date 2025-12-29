@@ -464,18 +464,34 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
   }
 
   // Extraer datos
+  const devotionalTitle = removeInlineStyles(postData.title.rendered);
+  const verseText = extractVerse(content);
+  const verseRef = extractBibleRef(content);
+  
+  // Generar valores para Open Graph
+  const ogTitle = devotionalTitle;
+  const ogDescription = verseText.length > 150 ? verseText.substring(0, 147) + '...' : verseText;
+  const ogUrlPath = `${dateSlug}.html`;
+  const ogImagePath = `${dateSlug}.png`; // Usar el PNG generado como imagen OG
+  const ogImageAlt = `${devotionalTitle} - ${verseRef}`;
+  
   const data = {
-    verse_ref: extractBibleRef(content),
+    verse_ref: verseRef,
     date: formatDate(postData.date),
-    verse_text: extractVerse(content),
-    devotional_title: removeInlineStyles(postData.title.rendered),
+    verse_text: verseText,
+    devotional_title: devotionalTitle,
     biblical_treasure: extractBiblicalTreasure(content),
     call_to_action: extractCallToAction(content),
     audio_filename: `${dateSlug}.mp3`,
     png_filename: `${dateSlug}.png`,
     css_variant: cssVariant,
     cover_image: coverImage,
-    prev_next_navigation: navigationHtml
+    prev_next_navigation: navigationHtml,
+    og_title: ogTitle,
+    og_description: ogDescription,
+    og_url_path: ogUrlPath,
+    og_image_path: ogImagePath,
+    og_image_alt: ogImageAlt
   };
 
   // Reemplazar placeholders

@@ -59,7 +59,7 @@ function fetchJsonData(source) {
 
       console.log(`📡 Obteniendo datos desde: ${source}`);
 
-      protocol.get(source, (res) => {
+      const request = protocol.get(source, (res) => {
         let data = '';
 
         res.on('data', (chunk) => {
@@ -76,6 +76,12 @@ function fetchJsonData(source) {
         });
       }).on('error', (error) => {
         reject(new Error(`Error obteniendo datos desde URL: ${error.message}`));
+      });
+
+      // Timeout de 30 segundos
+      request.setTimeout(30000, () => {
+        request.destroy();
+        reject(new Error('Timeout: La petición HTTP tardó más de 30 segundos'));
       });
     } else {
       // Es un archivo local
@@ -94,19 +100,27 @@ function fetchJsonData(source) {
 /**
  * Genera una imagen PNG desde el HTML usando Puppeteer
  * Solo captura el elemento <article class="devocional">
+ * @param {string} htmlFilePath - Ruta al archivo HTML
+ * @param {string} outputPath - Ruta de salida para el PNG
+ * @param {number} width - Ancho de la imagen
+ * @param {object} browser - Instancia de navegador (opcional, si no se pasa se crea una nueva)
  */
-async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920) {
+async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920, browser = null) {
   if (!puppeteer) {
     throw new Error('Puppeteer no está disponible');
   }
 
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
+  const shouldCloseBrowser = !browser;
+  if (!browser) {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+  }
 
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
 
     // Configurar viewport con el ancho especificado
     await page.setViewport({
@@ -118,11 +132,12 @@ async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920) {
     // Cargar el HTML desde el archivo para que las rutas relativas funcionen
     const fileUrl = `file:///${htmlFilePath.replace(/\\/g, '/')}`;
     await page.goto(fileUrl, {
-      waitUntil: 'networkidle0'
+      waitUntil: 'networkidle0',
+      timeout: 30000 // 30 segundos timeout
     });
 
     // Esperar a que el elemento article esté presente
-    await page.waitForSelector('article.devocional');
+    await page.waitForSelector('article.devocional', { timeout: 10000 });
 
     // Ocultar elementos con clase .no-screenshot (como el botón de descarga)
     await page.evaluate(() => {
@@ -144,7 +159,12 @@ async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920) {
 
     return true;
   } finally {
-    await browser.close();
+    if (page) {
+      await page.close(); // Cerrar la página para liberar memoria
+    }
+    if (shouldCloseBrowser) {
+      await browser.close();
+    }
   }
 }
 
@@ -208,7 +228,7 @@ function downloadAudioFile(audioUrl, outputPath) {
   return new Promise((resolve, reject) => {
     const protocol = audioUrl.startsWith('https://') ? https : http;
 
-    protocol.get(audioUrl, (res) => {
+    const request = protocol.get(audioUrl, (res) => {
       // Si el archivo no existe (404), resolver sin error
       if (res.statusCode === 404) {
         resolve(false);
@@ -238,6 +258,13 @@ function downloadAudioFile(audioUrl, outputPath) {
 
     }).on('error', (error) => {
       reject(error);
+    });
+
+    // Timeout de 60 segundos para descargas de audio (archivos más grandes)
+    request.setTimeout(60000, () => {
+      request.destroy();
+      fs.unlink(outputPath, () => {}); // Eliminar archivo parcial
+      reject(new Error('Timeout: La descarga de audio tardó más de 60 segundos'));
     });
   });
 }
@@ -576,10 +603,27 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     // Ordenar por fecha descendente
     const sortedMetadata = devotionalsMetadata.sort((a, b) => b.dateSlug.localeCompare(a.dateSlug));
 
-    // SEGUNDA PASADA: Generar HTML con navegación (en paralelo, lotes de 4)
+    // SEGUNDA PASADA: Generar HTML con navegación (en paralelo, lotes de 2)
     console.log('🔨 Generando archivos HTML...\n');
 
-    // Función para procesar un devocional individual
+    // Crear una instancia de navegador compartida si se generan imágenes
+    let sharedBrowser = null;
+    if (CONFIG.generateImages) {
+      console.log('🌐 Iniciando navegador compartido...\n');
+      sharedBrowser = await puppeteer.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage', // Reduce uso de /dev/shm
+          '--disable-accelerated-2d-canvas',
+          '--disable-gpu'
+        ]
+      });
+    }
+
+    try {
+      // Función para procesar un devocional individual
     const processDevotional = async (metadata, index, total) => {
       const post = metadata.post;
 
@@ -603,7 +647,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
         if (CONFIG.generateImages) {
           const imagePath = path.join(CONFIG.outputDir, `${metadata.dateSlug}.png`);
           console.log(`   🖼️  Generando imagen...`);
-          await generateImageFromHtml(outputPath, imagePath, CONFIG.imageWidth);
+          await generateImageFromHtml(outputPath, imagePath, CONFIG.imageWidth, sharedBrowser);
           console.log(`   ✅ Imagen guardada: ${metadata.dateSlug}.png`);
         }
 
@@ -633,8 +677,8 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
       }
     };
 
-    // Procesar en lotes de 4 en paralelo
-    const BATCH_SIZE = 4;
+    // Procesar en lotes de 2 en paralelo (reducido para evitar OOM)
+    const BATCH_SIZE = 2;
     for (let i = 0; i < sortedMetadata.length; i += BATCH_SIZE) {
       const batch = sortedMetadata.slice(i, i + BATCH_SIZE);
       const batchPromises = batch.map((metadata, batchIndex) => {
@@ -673,6 +717,18 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
 
     console.log('\n🎉 ¡Proceso completado!');
     console.log(`📁 Archivos generados en: ${CONFIG.outputDir}`);
+
+    } finally {
+      // Cerrar navegador compartido si existe (siempre, incluso si hay error)
+      if (sharedBrowser) {
+        console.log('\n🌐 Cerrando navegador compartido...');
+        try {
+          await sharedBrowser.close();
+        } catch (err) {
+          console.warn('⚠️  Error al cerrar navegador:', err.message);
+        }
+      }
+    }
 
   } catch (error) {
     console.error('❌ Error fatal:', error.message);

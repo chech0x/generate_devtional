@@ -39,7 +39,7 @@ const CONFIG = {
   templatePath: process.env.DEVO_TEMPLATE_PATH || path.join(__dirname, 'devocional-template_placeholders.html'),
   outputDir: process.env.DEVO_OUTPUT_DIR || path.join(__dirname, 'output'),
   generateImages: GENERATE_IMAGES && puppeteer !== undefined,
-  imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1920', 10),
+  imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1080', 10),
   audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || 'https://cenfolic.com/audio/devo/',
   downloadAudio: DOWNLOAD_AUDIO
 };
@@ -126,7 +126,7 @@ async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920, bro
     await page.setViewport({
       width: width,
       height: 1080,
-      deviceScaleFactor: 1
+      deviceScaleFactor: 3  // Aumentado a 3x para mejor calidad y texto más grande
     });
 
     // Cargar el HTML desde el archivo para que las rutas relativas funcionen

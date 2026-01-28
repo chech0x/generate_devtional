@@ -1,12 +1,12 @@
 /* ============================================
-   VARIABLES CSS - Personaliza aquí
+   VARIABLES CSS - Tema 05 (Naranja)
    ============================================ */
 :root {
   /* Colores principales */
   --color-primario: #e67e22;
   --color-primario-oscuro: #d35400;
   --color-primario-rgb: 230, 126, 34;
-  --color-secundario: #5A5F7A;
+  --color-secundario: #5a5f7a;
   --color-acento: #003366;
   --color-acento-rgb: 0, 51, 102;
 
@@ -16,39 +16,9 @@
 
   /* Colores de fondo */
   --color-fondo: #f8f9fa;
-  --color-blanco: #FFFFFF;
+  --color-blanco: #ffffff;
 
-  /* Sombras */
-  --color-sombra: rgba(0, 0, 0, 0.1);
-  --color-sombra-fuerte: rgba(0, 0, 0, 0.2);
-  --color-sombra-texto: rgba(0, 0, 0, 0.4);
-  --color-sombra-primario: rgba(var(--color-primario-rgb), 0.3);
-  --color-sombra-primario-suave: rgba(var(--color-primario-rgb), 0.25);
-
-  /* Colores de overlay */
-  --color-overlay-inicio: rgba(var(--color-acento-rgb), 0.3);
-  --color-overlay-fin: rgba(var(--color-acento-rgb), 0.5);
-
-  /* Colores decorativos */
-  --color-comillas: var(--color-primario);
-  --color-separador: var(--color-fondo);
-  --color-flecha-accion: var(--color-primario);
-  --color-numero-lista: var(--color-blanco);
-  --color-fondo-numero-lista: var(--color-primario);
-
-  /* Banner (Header) */
-  --banner-title-color: #ffffff;
-  --banner-subtitle-color: rgba(48, 29, 17, 0.62);
-  --banner-title-shadow-color: rgba(0, 0, 0, 0.26);
-  --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.22);
-  --banner-subtitle-shadow-color: rgba(255, 255, 255, 0.18);
-  --banner-title-underline-height: 0.12em;
-  --banner-title-underline-color: #ffffff;
-  --banner-title-underline-shadow-color: rgba(0, 0, 0, 0.18);
-  --banner-title-underline-offset: 0.10em;
-  --banner-text-offset-y: 2px;
-
-  /* Colores de referencia (claro y oscuro) */
-  --devo-bar-referencia-bg-claro: #e67e22;
-  --devo-bar-referencia-bg-oscuro: #d35400;
+  /* Variaciones del nuevo diseño */
+  --devo-accent: #e67e22;
+  --devo-accent-hover: #d35400;
 }

@@ -1,303 +1,460 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devocional - Reflexión para cada día</title>
-  
-  <!-- Open Graph / Facebook / WhatsApp -->
-  <meta property="og:title" content="{{og_title}}" />
-  <meta property="og:description" content="{{og_description}}" />
-  <meta property="og:url" content="https://www.devocional.info/{{og_url_path}}" />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://www.devocional.info/{{og_image_path}}" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="{{og_image_alt}}" />
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Devocional - Reflexión para cada día</title>
 
-  <!-- CSS Variables y Estilos -->
-  <link rel="stylesheet" href="css/common-variables.css">
-  <link rel="stylesheet" href="css/variables-{{css_variant}}.css">
-  <link rel="stylesheet" href="css/general.css">
-</head>
-<body>
-  
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:title" content="{{og_title}}" />
+    <meta property="og:description" content="{{og_description}}" />
+    <meta
+      property="og:url"
+      content="https://www.devocional.info/{{og_url_path}}"
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://www.devocional.info/{{og_image_path}}"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{{og_image_alt}}" />
 
-<article class="devocional">
-  <!-- TOP BAR -->
-  <div class="devocional__topbar no-screenshot">
-    <a class="devocional__home-link" href="index.html">← Inicio</a>
-  </div>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- HEADER -->
-  <header class="devocional__header">
-    <img
-      src="images/{{cover_image}}"
-      alt="Amanecer sobre montañas"
-      class="devocional__header-imagen"
-    >
-    <div class="devocional__header-overlay" aria-hidden="true">
-      <div class="devocional__brand">
-        <div class="devocional__titulo">DEVOCIONAL</div>
+    <!-- CSS Variables y Estilos -->
+    <link rel="stylesheet" href="css/common-variables.css" />
+    <link rel="stylesheet" href="css/variables-{{css_variant}}.css" />
+    <link rel="stylesheet" href="css/general.css" />
+  </head>
+  <body>
+    <article class="devocional">
+      <div class="devocional__main-content">
+        <!-- TOP NAVIGATION -->
+        <div class="devocional__topbar no-screenshot">
+          <a class="devocional__home-link" href="index.html"
+            >← Volver a devocionales</a
+          >
+        </div>
+
+        <!-- TÍTULO DEL DEVOCIONAL -->
+        <h1 class="devocional__titulo-principal">{{devotional_title}}</h1>
+
+        <!-- FECHA -->
+        <div class="devocional__fecha">
+          <span class="devocional__fecha-icono">📅</span>
+          <span class="devocional__fecha-texto">{{date}}</span>
+        </div>
+
+        <!-- REPRODUCTOR DE AUDIO -->
+        <div class="devocional__audio-player no-screenshot" id="audioPlayer">
+          <div class="devocional__audio-loading" id="audioLoading">
+            Cargando audio...
+          </div>
+          <div
+            class="devocional__audio-error"
+            id="audioError"
+            style="display: none"
+          >
+            🔇 Audio no disponible
+          </div>
+          <div
+            class="devocional__audio-controls"
+            id="audioControls"
+            style="display: none"
+          >
+            <div class="devocional__audio-header">
+              <span class="devocional__audio-icon">🎧</span>
+              <div class="devocional__audio-text">
+                <div class="devocional__audio-label">Escuchar devocional</div>
+                <div class="devocional__audio-title">{{devotional_title}}</div>
+              </div>
+            </div>
+            <div class="devocional__audio-player-wrapper">
+              <button class="devocional__audio-play-btn" id="audioPlayBtn">
+                <span class="devocional__audio-play-icon">▶</span>
+              </button>
+              <div class="devocional__audio-progress-wrapper">
+                <div class="devocional__audio-time">
+                  <span id="audioCurrentTime">0:00</span>
+                  <span id="audioDuration">0:00</span>
+                </div>
+                <div class="devocional__audio-progress-track">
+                  <input
+                    type="range"
+                    class="devocional__audio-progress"
+                    id="audioProgress"
+                    min="0"
+                    max="100"
+                    value="0"
+                  />
+                </div>
+              </div>
+              <div class="devocional__audio-volume-wrapper">
+                <span class="devocional__audio-volume-icon">🔊</span>
+                <div class="devocional__audio-volume-track">
+                  <input
+                    type="range"
+                    class="devocional__audio-volume"
+                    id="audioVolume"
+                    min="0"
+                    max="100"
+                    value="100"
+                  />
+                </div>
+              </div>
+            </div>
+            <audio id="audioElement" preload="metadata">
+              <source id="audioSource" type="audio/mpeg" />
+            </audio>
+          </div>
+        </div>
+
+        <!-- VERSÍCULO PRINCIPAL -->
+        <section class="devocional__versiculo-section">
+          <blockquote class="devocional__versiculo">
+            <span class="devocional__versiculo-text">{{verse_text}}</span>
+            <cite class="devocional__versiculo-cite">{{verse_ref}}</cite>
+          </blockquote>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="devocional__contenido">{{biblical_treasure}}</div>
+
+        <!-- PUNTO DE ACCIÓN -->
+        <section class="devocional__accion">
+          <h3 class="devocional__accion-titulo">Punto de Acción</h3>
+          <div class="devocional__accion-contenido">{{call_to_action}}</div>
+        </section>
+
+        <!-- SECCIÓN DE ACCIONES -->
+        <div class="devocional__actions-wrapper no-screenshot">
+          <div class="devocional__actions">
+            <!-- BOTÓN DESCARGAR PNG -->
+            <button class="devocional__download-btn" onclick="downloadAsPNG()">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Descargar devocional</span>
+            </button>
+
+            <!-- BOTÓN COMPARTIR -->
+            <button class="devocional__share-btn" onclick="shareDevotional()">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Compartir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- NAVEGACIÓN -->
+        <nav class="devocional__navigation no-screenshot">
+          {{prev_next_navigation}}
+        </nav>
       </div>
-    </div>
-  </header>
+    </article>
 
-  <!-- REFERENCIA BÍBLICA Y SUBTÍTULO -->
-  <div class="devocional__ref-subtitle-section">
-    <div class="devocional__subtitulo-inline">REFLEXIÓN PARA CADA DÍA</div>
-    <div class="devocional__cita-badge">{{verse_ref}}</div>
-  </div>
+    <script>
+      // ============================================
+      // CONFIGURACIÓN
+      // ============================================
+      const AUDIO_SERVER_URL = "{{audio_server_url}}";
+      const AUDIO_FILENAME = "{{audio_filename}}";
+      const PNG_FILENAME = "{{png_filename}}";
 
-  <!-- FECHA -->
-  <div class="devocional__fecha">
-    <span class="devocional__fecha-texto">{{date}}</span>
-  </div>
+      // ============================================
+      // CARGA DE AUDIO
+      // ============================================
+      async function loadAudio() {
+        const audioLoading = document.getElementById("audioLoading");
+        const audioError = document.getElementById("audioError");
+        const audioControls = document.getElementById("audioControls");
+        const audioSource = document.getElementById("audioSource");
+        const audioElement = document.getElementById("audioElement");
 
-  <!-- VERSÍCULO PRINCIPAL -->
-  <section class="devocional__versiculo-section">
-    <blockquote class="devocional__versiculo">
-      {{verse_text}}
-    </blockquote>
-  </section>
-
-  <!-- ETIQUETA TESORO BÍBLICO -->
-  <div class="devocional__etiqueta-badge">
-    Tesoro Bíblico
-  </div>
-
-  <div class="devocional__main-content">
-  <!-- REPRODUCTOR DE AUDIO -->
-  <div class="devocional__audio-player no-screenshot" id="audioPlayer">
-    <div class="devocional__audio-loading" id="audioLoading">
-      Cargando audio...
-    </div>
-    <div class="devocional__audio-error" id="audioError" style="display: none;">
-      🔇 Audio no disponible
-    </div>
-    <div class="devocional__audio-controls" id="audioControls">
-      <audio controls preload="metadata" id="audioElement">
-        <source id="audioSource" type="audio/mpeg">
-        Tu navegador no soporta el elemento de audio.
-      </audio>
-    </div>
-  </div>
-
-  <!-- TÍTULO DEL DEVOCIONAL -->
-<!-- <div class="devocional__titulo-wrapper">
-  <h2 class="devocional__contenido-titulo">{{devotional_title}}</h2>
-</div> -->
-
-<!-- CONTENIDO PRINCIPAL -->
-<div class="devocional__contenido">
-  {{biblical_treasure}}
-</div>
-
-<!-- PUNTO DE ACCIÓN -->
-<section class="devocional__accion">
-  <h3 class="devocional__accion-titulo">Punto de Acción</h3>
-  <div class="devocional__accion-contenido">
-    {{call_to_action}}
-  </div>
-</section>
-
-<!-- SECCIÓN DE ACCIONES -->
-<div class="devocional__actions no-screenshot">
-  <!-- BOTÓN DESCARGAR PNG -->
-  <button class="devocional__download-btn" onclick="downloadAsPNG()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-    <span>Descargar devocional</span>
-  </button>
-
-  <!-- BOTÓN COMPARTIR -->
-  <button class="devocional__share-btn" onclick="shareDevotional()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="18" cy="5" r="3"></circle>
-      <circle cx="6" cy="12" r="3"></circle>
-      <circle cx="18" cy="19" r="3"></circle>
-      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-    </svg>
-    <span>Compartir</span>
-  </button>
-</div>
-
-<!-- NAVEGACIÓN -->
-<nav class="devocional__navigation no-screenshot">
-  {{prev_next_navigation}}
-</nav>
-
-
-
-<!-- FOOTER -->
-<footer class="devocional__footer">
-  Devocionales Por Chafic Siade, con ayuda en recursos de estudio.
-</footer>
-  </div>
-  
-</article>
-
-<script>
-  // ============================================
-  // CONFIGURACIÓN
-  // ============================================
-  const AUDIO_SERVER_URL = '{{audio_server_url}}';
-  const AUDIO_FILENAME = '{{audio_filename}}';
-  const PNG_FILENAME = '{{png_filename}}';
-
-  // ============================================
-  // CARGA DE AUDIO
-  // ============================================
-  async function loadAudio() {
-    const audioLoading = document.getElementById('audioLoading');
-    const audioError = document.getElementById('audioError');
-    const audioControls = document.getElementById('audioControls');
-    const audioSource = document.getElementById('audioSource');
-    const audioElement = document.getElementById('audioElement');
-
-    try {
-      // Construir URL del audio (generado estáticamente durante build)
-      const audioUrl = `${AUDIO_SERVER_URL}${AUDIO_FILENAME}`;
-
-      audioError.style.display = 'none';
-      audioLoading.style.display = 'block';
-
-      // Configurar el reproductor directamente
-      audioSource.src = audioUrl;
-      audioElement.load();
-
-      // Mostrar controles cuando el audio esté listo
-      audioElement.addEventListener('loadedmetadata', () => {
-        audioLoading.style.display = 'none';
-        audioControls.classList.add('loaded');
-      }, { once: true });
-
-      // Manejar errores de carga
-      audioElement.addEventListener('error', () => {
-        audioLoading.style.display = 'none';
-        audioError.style.display = 'block';
-      }, { once: true });
-
-    } catch (error) {
-      console.error('Error al cargar audio:', error);
-      audioLoading.style.display = 'none';
-      audioError.style.display = 'block';
-    }
-  }
-
-  // Cargar el audio cuando la página esté lista
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadAudio);
-  } else {
-    loadAudio();
-  }
-
-  // ============================================
-  // DESCARGA DE IMAGEN
-  // ============================================
-  async function downloadAsPNG() {
-    const button = document.querySelector('.devocional__download-btn');
-    const originalHTML = button.innerHTML;
-
-    // Desactivar botón mientras se procesa
-    button.disabled = true;
-    button.innerHTML = '<span>Descargando...</span>';
-
-    try {
-      // Usar el nombre del archivo PNG generado estáticamente durante build
-      const pngFilename = PNG_FILENAME;
-
-      // Intentar descargar el PNG que ya existe
-      const response = await fetch(pngFilename);
-
-      if (response.ok) {
-        // El PNG existe, descargarlo directamente
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = pngFilename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        // Restaurar botón
-        button.disabled = false;
-        button.innerHTML = originalHTML;
-      } else {
-        // El PNG no existe, mostrar mensaje
-        throw new Error('IMAGE_NOT_FOUND');
-      }
-
-    } catch (error) {
-      console.error('Error al descargar imagen:', error);
-
-      if (error.message === 'IMAGE_NOT_FOUND') {
-        alert('⚠️ Imagen PNG no encontrada.\n\n' +
-              'Para generar las imágenes PNG, ejecuta:\n' +
-              'DEVO_GENERATE_IMAGES=true node parse-devotional-json.js');
-      } else {
-        alert('Error al descargar la imagen. Verifica que el archivo PNG existe en la misma carpeta.');
-      }
-
-      // Restaurar botón
-      button.disabled = false;
-      button.innerHTML = originalHTML;
-    }
-  }
-
-  // ============================================
-  // COMPARTIR DEVOCIONAL
-  // ============================================
-  async function shareDevotional() {
-    const shareButton = document.querySelector('.devocional__share-btn');
-    const originalHTML = shareButton.innerHTML;
-
-    shareButton.disabled = true;
-    shareButton.innerHTML = '<span>Compartiendo...</span>';
-
-    try {
-      const url = window.location.href;
-      const title = document.querySelector('.devocional__contenido-titulo')?.textContent || 'Devocional';
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: title,
-          text: 'Comparte este devocional',
-          url: url,
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        alert('✅ Enlace copiado al portapapeles');
-      }
-
-      shareButton.disabled = false;
-      shareButton.innerHTML = originalHTML;
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Error al compartir:', error);
-        
         try {
-          await navigator.clipboard.writeText(window.location.href);
-          alert('✅ Enlace copiado al portapapeles');
-        } catch (clipboardError) {
-          alert('❌ No se pudo compartir. Por favor, copia la URL manualmente.');
+          // Construir URL del audio (generado estáticamente durante build)
+          const audioUrl = `${AUDIO_SERVER_URL}${AUDIO_FILENAME}`;
+
+          audioError.style.display = "none";
+          audioLoading.style.display = "block";
+
+          // Configurar el reproductor directamente
+          audioSource.src = audioUrl;
+          audioElement.load();
+
+          // Mostrar controles cuando el audio esté listo
+          audioElement.addEventListener(
+            "loadedmetadata",
+            () => {
+              audioLoading.style.display = "none";
+              audioControls.style.display = "flex";
+              setupCustomAudioControls();
+            },
+            { once: true },
+          );
+
+          // Manejar errores de carga
+          audioElement.addEventListener(
+            "error",
+            () => {
+              audioLoading.style.display = "none";
+              audioError.style.display = "block";
+            },
+            { once: true },
+          );
+        } catch (error) {
+          console.error("Error al cargar audio:", error);
+          audioLoading.style.display = "none";
+          audioError.style.display = "block";
         }
       }
 
-      shareButton.disabled = false;
-      shareButton.innerHTML = originalHTML;
-    }
-  }
-</script>
+      // ============================================
+      // CONTROLES DE AUDIO PERSONALIZADOS
+      // ============================================
+      function setupCustomAudioControls() {
+        const audioElement = document.getElementById("audioElement");
+        const playBtn = document.getElementById("audioPlayBtn");
+        const playIcon = playBtn.querySelector(".devocional__audio-play-icon");
+        const progressBar = document.getElementById("audioProgress");
+        const volumeSlider = document.getElementById("audioVolume");
+        const currentTimeSpan = document.getElementById("audioCurrentTime");
+        const durationSpan = document.getElementById("audioDuration");
 
-</body>
+        // Formatear tiempo (m:ss o h:mm:ss)
+        function formatTime(seconds) {
+          if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+
+          const totalSeconds = Math.floor(seconds);
+          const hours = Math.floor(totalSeconds / 3600);
+          const mins = Math.floor((totalSeconds % 3600) / 60);
+          const secs = totalSeconds % 60;
+
+          if (hours > 0) {
+            return `${hours}:${mins.toString().padStart(2, "0")}:${secs
+              .toString()
+              .padStart(2, "0")}`;
+          }
+
+          return `${mins}:${secs.toString().padStart(2, "0")}`;
+        }
+
+        // Actualizar tiempo
+        function updateTime() {
+          currentTimeSpan.textContent = formatTime(audioElement.currentTime);
+          const progress =
+            (audioElement.currentTime / audioElement.duration) * 100 || 0;
+          progressBar.value = progress;
+          progressBar.style.setProperty("--progress", progress);
+          progressBar
+            .closest(".devocional__audio-progress-wrapper")
+            .style.setProperty("--progress", progress);
+        }
+
+        // Actualizar duración
+        function updateDuration() {
+          durationSpan.textContent = formatTime(audioElement.duration);
+        }
+
+        // Play/Pause
+        playBtn.addEventListener("click", () => {
+          if (audioElement.paused) {
+            audioElement.play();
+            playIcon.textContent = "⏸";
+          } else {
+            audioElement.pause();
+            playIcon.textContent = "▶";
+          }
+        });
+
+        // Progress bar
+        progressBar.addEventListener("input", () => {
+          const percent = progressBar.value;
+          audioElement.currentTime = (percent / 100) * audioElement.duration;
+          progressBar.style.setProperty("--progress", percent);
+          progressBar
+            .closest(".devocional__audio-progress-wrapper")
+            .style.setProperty("--progress", percent);
+        });
+
+        // Volume
+        volumeSlider.addEventListener("input", () => {
+          const volume = volumeSlider.value;
+          audioElement.volume = volume / 100;
+          volumeSlider.style.setProperty("--volume", volume);
+          volumeSlider
+            .closest(".devocional__audio-volume-wrapper")
+            .style.setProperty("--volume", volume);
+        });
+
+        // Initialize volume display
+        volumeSlider.style.setProperty("--volume", volumeSlider.value);
+        volumeSlider
+          .closest(".devocional__audio-volume-wrapper")
+          .style.setProperty("--volume", volumeSlider.value);
+
+        // Duración: si el metadata ya cargó, este listener no se dispara.
+        // Por eso actualizamos inmediatamente y también escuchamos durationchange.
+        if (audioElement.readyState >= 1) {
+          updateDuration();
+        }
+
+        // Event listeners
+        audioElement.addEventListener("loadedmetadata", updateDuration);
+        audioElement.addEventListener("durationchange", updateDuration);
+
+        audioElement.addEventListener("timeupdate", updateTime);
+        audioElement.addEventListener("ended", () => {
+          playIcon.textContent = "▶";
+          progressBar.value = 0;
+          progressBar.style.setProperty("--progress", 0);
+          progressBar
+            .closest(".devocional__audio-progress-wrapper")
+            .style.setProperty("--progress", 0);
+          currentTimeSpan.textContent = "0:00";
+        });
+      }
+
+      // Cargar el audio cuando la página esté lista
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadAudio);
+      } else {
+        loadAudio();
+      }
+
+      // ============================================
+      // DESCARGA DE IMAGEN
+      // ============================================
+      async function downloadAsPNG() {
+        const button = document.querySelector(".devocional__download-btn");
+        const originalHTML = button.innerHTML;
+
+        // Desactivar botón mientras se procesa
+        button.disabled = true;
+        button.innerHTML = "<span>Descargando...</span>";
+
+        try {
+          // Usar el nombre del archivo PNG generado estáticamente durante build
+          const pngFilename = PNG_FILENAME;
+
+          // Intentar descargar el PNG que ya existe
+          const response = await fetch(pngFilename);
+
+          if (response.ok) {
+            // El PNG existe, descargarlo directamente
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = pngFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Restaurar botón
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+          } else {
+            // El PNG no existe, mostrar mensaje
+            throw new Error("IMAGE_NOT_FOUND");
+          }
+        } catch (error) {
+          console.error("Error al descargar imagen:", error);
+
+          if (error.message === "IMAGE_NOT_FOUND") {
+            alert(
+              "⚠️ Imagen PNG no encontrada.\n\n" +
+                "Para generar las imágenes PNG, ejecuta:\n" +
+                "DEVO_GENERATE_IMAGES=true node parse-devotional-json.js",
+            );
+          } else {
+            alert(
+              "Error al descargar la imagen. Verifica que el archivo PNG existe en la misma carpeta.",
+            );
+          }
+
+          // Restaurar botón
+          button.disabled = false;
+          button.innerHTML = originalHTML;
+        }
+      }
+
+      // ============================================
+      // COMPARTIR DEVOCIONAL
+      // ============================================
+      async function shareDevotional() {
+        const shareButton = document.querySelector(".devocional__share-btn");
+        const originalHTML = shareButton.innerHTML;
+
+        shareButton.disabled = true;
+        shareButton.innerHTML = "<span>Compartiendo...</span>";
+
+        try {
+          const url = window.location.href;
+          const title =
+            document.querySelector(".devocional__titulo-principal")
+              ?.textContent || "Devocional";
+
+          if (navigator.share) {
+            await navigator.share({
+              title: title,
+              text: "Comparte este devocional",
+              url: url,
+            });
+          } else {
+            await navigator.clipboard.writeText(url);
+            alert("✅ Enlace copiado al portapapeles");
+          }
+
+          shareButton.disabled = false;
+          shareButton.innerHTML = originalHTML;
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            console.error("Error al compartir:", error);
+
+            try {
+              await navigator.clipboard.writeText(window.location.href);
+              alert("✅ Enlace copiado al portapapeles");
+            } catch (clipboardError) {
+              alert(
+                "❌ No se pudo compartir. Por favor, copia la URL manualmente.",
+              );
+            }
+          }
+
+          shareButton.disabled = false;
+          shareButton.innerHTML = originalHTML;
+        }
+      }
+    </script>
+  </body>
 </html>

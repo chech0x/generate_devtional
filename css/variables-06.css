@@ -1,12 +1,12 @@
 /* ============================================
-   VARIABLES CSS - Personaliza aquí
+   VARIABLES CSS - Tema 06 (Rojo)
    ============================================ */
 :root {
   /* Colores principales */
   --color-primario: #e74c3c;
   --color-primario-oscuro: #c0392b;
   --color-primario-rgb: 231, 76, 60;
-  --color-secundario: #5A5F7A;
+  --color-secundario: #5a5f7a;
   --color-acento: #003366;
   --color-acento-rgb: 0, 51, 102;
 
@@ -16,35 +16,9 @@
 
   /* Colores de fondo */
   --color-fondo: #f8f9fa;
-  --color-blanco: #FFFFFF;
+  --color-blanco: #ffffff;
 
-  /* Sombras */
-  --color-sombra: rgba(0, 0, 0, 0.1);
-  --color-sombra-fuerte: rgba(0, 0, 0, 0.2);
-  --color-sombra-texto: rgba(0, 0, 0, 0.4);
-  --color-sombra-primario: rgba(var(--color-primario-rgb), 0.3);
-  --color-sombra-primario-suave: rgba(var(--color-primario-rgb), 0.25);
-
-  /* Colores de overlay */
-  --color-overlay-inicio: rgba(var(--color-acento-rgb), 0.3);
-  --color-overlay-fin: rgba(var(--color-acento-rgb), 0.5);
-
-  /* Colores decorativos */
-  --color-comillas: var(--color-primario);
-  --color-separador: var(--color-fondo);
-  --color-flecha-accion: var(--color-primario);
-  --color-numero-lista: var(--color-blanco);
-  --color-fondo-numero-lista: var(--color-primario);
-
-  /* Banner (Header) */
-  --banner-title-color: #ffffff;
-  --banner-subtitle-color: #C18A55;
-  --banner-title-shadow-color: rgba(0, 0, 0, 0.26);
-  --banner-title-shadow-color-strong: rgba(0, 0, 0, 0.22);
-  --banner-subtitle-shadow-color: rgba(0, 0, 0, 0.20);
-  --banner-text-offset-y: 0px;
-
-  /* Colores de referencia (claro y oscuro) */
-  --devo-bar-referencia-bg-claro: #ff6857;
-  --devo-bar-referencia-bg-oscuro: #c0392b;
+  /* Variaciones del nuevo diseño */
+  --devo-accent: #e74c3c;
+  --devo-accent-hover: #c0392b;
 }

@@ -38,6 +38,7 @@ const CONFIG = {
   jsonSource: process.env.DEVO_JSON_SOURCE || 'https://cenfolic.com/wordpress/wp-json/wp/v2/posts',
   templatePath: process.env.DEVO_TEMPLATE_PATH || path.join(__dirname, 'devocional-template_placeholders.html'),
   outputDir: process.env.DEVO_OUTPUT_DIR || path.join(__dirname, 'output'),
+  siteBaseUrl: process.env.DEVO_SITE_BASE_URL || 'https://www.devocional.info',
   generateImages: GENERATE_IMAGES && puppeteer !== undefined,
   imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1080', 10),
   audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || 'https://cenfolic.com/audio/devo/',
@@ -495,11 +496,11 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
   const verseText = extractVerse(content);
   const verseRef = extractBibleRef(content);
   
-  // Generar valores para Open Graph
+  // Generar valores para Open Graph (usar devo-01 a devo-07.jpg para preview)
   const ogTitle = devotionalTitle;
   const ogDescription = verseText.length > 150 ? verseText.substring(0, 147) + '...' : verseText;
   const ogUrlPath = `${dateSlug}.html`;
-  const ogImagePath = `${dateSlug}.png`; // Usar el PNG generado como imagen OG
+  const ogImagePath = `images/${coverImage}`; // devo-01.jpg a devo-07.jpg para redes sociales
   const ogImageAlt = `${devotionalTitle} - ${verseRef}`;
   
   const data = {
@@ -709,6 +710,8 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     const indexTemplatePath = path.join(__dirname, 'index-template.html');
     if (fs.existsSync(indexTemplatePath)) {
       let indexTemplate = fs.readFileSync(indexTemplatePath, 'utf8');
+      const siteBaseUrl = CONFIG.siteBaseUrl.replace(/\/$/, ''); // sin trailing slash
+      indexTemplate = indexTemplate.replace(/\{\{SITE_BASE_URL\}\}/g, siteBaseUrl);
       indexTemplate = indexTemplate.replace('{{DEVOTIONALS_JSON}}', JSON.stringify(metadataForJson, null, 2));
       const indexOutputPath = path.join(CONFIG.outputDir, 'index.html');
       fs.writeFileSync(indexOutputPath, indexTemplate, 'utf8');

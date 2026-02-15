@@ -53,11 +53,13 @@ Personaliza el comportamiento del script:
 | Variable | Descripción | Valor por defecto |
 |----------|-------------|-------------------|
 | `DEVO_JSON_SOURCE` | URL de la API o ruta al archivo JSON | `https://cenfolic.com/wordpress/wp-json/wp/v2/posts` |
+| `DEVO_CENFOLIC_BASE_URL` | URL base para endpoints de cenfolic | `https://cenfolic.com` |
 | `DEVO_TEMPLATE_PATH` | Ruta al template HTML | `./devocional-template_placeholders.html` |
 | `DEVO_OUTPUT_DIR` | Directorio de salida | `./output` |
 | `DEVO_GENERATE_IMAGES` | Generar imágenes PNG (`true`/`false`) | `false` |
 | `DEVO_IMAGE_WIDTH` | Ancho de las imágenes en píxeles | `1920` |
 | `DEVO_AUDIO_SERVER_URL` | URL del servidor de archivos de audio | `https://cenfolic.com/audio/devo/` |
+| `DEVO_AUDIO_HASH_SUFFIXES` | Sufijos de hash remoto separados por coma | `.hash,.mp3.hash` |
 | `DEVO_DOWNLOAD_AUDIO` | Descargar archivos MP3 localmente (`true`/`false`) | `false` |
 
 **Ejemplos:**

@@ -3,12 +3,14 @@
  * Toma el JSON de WordPress y genera archivos HTML usando el template
  *
  * Variables de entorno:
+ * - DEVO_CENFOLIC_BASE_URL: URL base de cenfolic (default: https://cenfolic.com)
  * - DEVO_JSON_SOURCE: URL de la API o ruta al archivo JSON (default: https://cenfolic.com/wordpress/wp-json/wp/v2/posts)
  * - DEVO_TEMPLATE_PATH: Ruta al template HTML (default: ./devocional-template_placeholders.html)
  * - DEVO_OUTPUT_DIR: Directorio de salida (default: ./output)
  * - DEVO_GENERATE_IMAGES: Generar imágenes PNG (default: false, valores: true/false)
  * - DEVO_IMAGE_WIDTH: Ancho de la imagen (default: 1920)
  * - DEVO_AUDIO_SERVER_URL: URL del servidor de audio (default: https://cenfolic.com/audio/devo/)
+ * - DEVO_AUDIO_HASH_SUFFIXES: Sufijos de hash remoto separados por coma (default: .hash,.mp3.hash)
  * - DEVO_DOWNLOAD_AUDIO: Descargar archivos de audio localmente (default: false, valores: true/false)
  */
 
@@ -16,6 +18,37 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const http = require('http');
+const { pathToFileURL } = require('url');
+
+function loadEnvFile() {
+  const envFilePath = process.env.DEVO_ENV_FILE || path.join(__dirname, '.env');
+  if (!fs.existsSync(envFilePath)) return;
+
+  const content = fs.readFileSync(envFilePath, 'utf8');
+  const lines = content.split(/\r?\n/);
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const cleaned = line.startsWith('export ') ? line.slice(7).trim() : line;
+    const separatorIndex = cleaned.indexOf('=');
+    if (separatorIndex <= 0) continue;
+
+    const key = cleaned.slice(0, separatorIndex).trim();
+    let value = cleaned.slice(separatorIndex + 1).trim();
+
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\''))) {
+      value = value.slice(1, -1);
+    }
+
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFile();
 
 // Importar puppeteer solo si se necesita
 let puppeteer;
@@ -33,15 +66,21 @@ if (GENERATE_IMAGES) {
 // CONFIGURACIÓN
 // ==========================================
 const DOWNLOAD_AUDIO = process.env.DEVO_DOWNLOAD_AUDIO === 'true';
+const CENFOLIC_BASE_URL = (process.env.DEVO_CENFOLIC_BASE_URL || 'https://cenfolic.com').replace(/\/+$/, '');
+const AUDIO_HASH_SUFFIXES = (process.env.DEVO_AUDIO_HASH_SUFFIXES || '.hash,.mp3.hash')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 const CONFIG = {
-  jsonSource: process.env.DEVO_JSON_SOURCE || 'https://cenfolic.com/wordpress/wp-json/wp/v2/posts',
+  jsonSource: process.env.DEVO_JSON_SOURCE || `${CENFOLIC_BASE_URL}/wordpress/wp-json/wp/v2/posts`,
   templatePath: process.env.DEVO_TEMPLATE_PATH || path.join(__dirname, 'devocional-template_placeholders.html'),
   outputDir: process.env.DEVO_OUTPUT_DIR || path.join(__dirname, 'output'),
   siteBaseUrl: process.env.DEVO_SITE_BASE_URL || 'https://www.devocional.info',
   generateImages: GENERATE_IMAGES && puppeteer !== undefined,
   imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1080', 10),
-  audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || 'https://cenfolic.com/audio/devo/',
+  audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || `${CENFOLIC_BASE_URL}/audio/devo/`,
+  audioHashSuffixes: AUDIO_HASH_SUFFIXES,
   downloadAudio: DOWNLOAD_AUDIO
 };
 
@@ -131,7 +170,7 @@ async function generateImageFromHtml(htmlFilePath, outputPath, width = 1920, bro
     });
 
     // Cargar el HTML desde el archivo para que las rutas relativas funcionen
-    const fileUrl = `file:///${htmlFilePath.replace(/\\/g, '/')}`;
+    const fileUrl = pathToFileURL(path.resolve(htmlFilePath)).href;
     await page.goto(fileUrl, {
       waitUntil: 'networkidle0',
       timeout: 30000 // 30 segundos timeout
@@ -268,6 +307,204 @@ function downloadAudioFile(audioUrl, outputPath) {
       reject(new Error('Timeout: La descarga de audio tardó más de 60 segundos'));
     });
   });
+}
+
+/**
+ * Descarga un archivo de texto remoto (por ejemplo, hash) desde el servidor.
+ */
+function downloadTextFile(url) {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https://') ? https : http;
+
+    const request = protocol.get(url, (res) => {
+      if (res.statusCode === 404) {
+        resolve(null);
+        return;
+      }
+
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        resolve(data);
+      });
+    }).on('error', (error) => {
+      reject(error);
+    });
+
+    request.setTimeout(30000, () => {
+      request.destroy();
+      reject(new Error('Timeout: La descarga del hash tardó más de 30 segundos'));
+    });
+  });
+}
+
+/**
+ * Normaliza el contenido de un archivo hash.
+ */
+function normalizeHashValue(raw) {
+  if (!raw) return null;
+  const trimmed = raw.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const hashMatch = trimmed.match(/\b[a-f0-9]{32,128}\b/);
+  if (hashMatch) {
+    return hashMatch[0];
+  }
+
+  return trimmed;
+}
+
+/**
+ * Escribe un archivo solo si el contenido cambió.
+ */
+function writeFileIfChanged(filePath, content) {
+  ensureParentDir(filePath);
+  if (fs.existsSync(filePath)) {
+    const current = fs.readFileSync(filePath, 'utf8');
+    if (current === content) {
+      return false;
+    }
+  }
+
+  fs.writeFileSync(filePath, content, 'utf8');
+  return true;
+}
+
+/**
+ * Guarda hash local solo cuando hay un hash remoto distinto.
+ */
+function saveHashIfChanged(localHashPath, remoteHash) {
+  if (!remoteHash) {
+    return false;
+  }
+
+  const currentHash = fs.existsSync(localHashPath)
+    ? normalizeHashValue(fs.readFileSync(localHashPath, 'utf8'))
+    : null;
+  if (currentHash === remoteHash) {
+    return false;
+  }
+
+  ensureParentDir(localHashPath);
+  fs.writeFileSync(localHashPath, `${remoteHash}\n`, 'utf8');
+  return true;
+}
+
+function ensureDirExists(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+function ensureParentDir(filePath) {
+  ensureDirExists(path.dirname(filePath));
+}
+
+/**
+ * Determina si debe reprocesarse toda la fecha por estado de hash.
+ */
+function shouldForceRebuildForHash({ downloadAudioEnabled, remoteHash, localHash }) {
+  return Boolean(
+    downloadAudioEnabled &&
+    remoteHash &&
+    (!localHash || localHash !== remoteHash)
+  );
+}
+
+function resolveLocalHashPaths(outputDir, dateSlug) {
+  return {
+    primary: path.join(outputDir, `${dateSlug}.hash`),
+    legacy: path.join(outputDir, `${dateSlug}.mp3.hash`)
+  };
+}
+
+function readLocalHash(primaryPath, legacyPath) {
+  if (fs.existsSync(primaryPath)) {
+    return normalizeHashValue(fs.readFileSync(primaryPath, 'utf8'));
+  }
+  if (legacyPath && fs.existsSync(legacyPath)) {
+    return normalizeHashValue(fs.readFileSync(legacyPath, 'utf8'));
+  }
+  return null;
+}
+
+function buildProcessingPlan({ hashState, generateImagesEnabled, downloadAudioEnabled }) {
+  if (hashState.reason === 'missing_remote_hash') {
+    return { shouldProcess: false, reason: 'missing_remote_hash', processHtml: false, processImage: false, processAudio: false, shouldSaveHash: false };
+  }
+  if (hashState.reason === 'hash_unchanged') {
+    return { shouldProcess: false, reason: 'hash_unchanged', processHtml: false, processImage: false, processAudio: false, shouldSaveHash: false };
+  }
+
+  return {
+    shouldProcess: true,
+    reason: 'hash_changed_or_new',
+    processHtml: true,
+    processImage: Boolean(generateImagesEnabled),
+    processAudio: Boolean(downloadAudioEnabled),
+    shouldSaveHash: true
+  };
+}
+
+/**
+ * Evalúa el estado de hash para decidir si se reprocesa una fecha.
+ */
+async function evaluateHashSyncState({ audioServerUrl, dateSlug, hashSuffixes, localHashPath }) {
+  const localHash = readLocalHash(localHashPath.primary, localHashPath.legacy);
+
+  let remoteHash = null;
+  const remoteHashData = await fetchRemoteAudioHash(audioServerUrl, dateSlug, hashSuffixes);
+  if (remoteHashData && remoteHashData.hash) {
+    remoteHash = remoteHashData.hash;
+  }
+
+  if (!remoteHash) {
+    return { shouldRebuild: false, reason: 'missing_remote_hash', remoteHash: null, localHash };
+  }
+
+  const shouldRebuild = shouldForceRebuildForHash({
+    downloadAudioEnabled: true,
+    remoteHash,
+    localHash
+  });
+
+  return {
+    shouldRebuild,
+    reason: shouldRebuild ? 'hash_changed_or_new' : 'hash_unchanged',
+    remoteHash,
+    localHash
+  };
+}
+
+/**
+ * Busca hash remoto probando diferentes sufijos.
+ */
+async function fetchRemoteAudioHash(audioServerUrl, dateSlug, hashSuffixes) {
+  const baseUrl = audioServerUrl.replace(/\/+$/, '');
+  const suffixesToTry = (hashSuffixes && hashSuffixes.length > 0) ? hashSuffixes : ['.hash', '.mp3.hash'];
+
+  for (const suffix of suffixesToTry) {
+    const hashUrl = `${baseUrl}/${dateSlug}${suffix}`;
+    const rawHash = await downloadTextFile(hashUrl);
+    const normalized = normalizeHashValue(rawHash);
+    if (normalized) {
+      return {
+        hash: normalized,
+        url: hashUrl,
+        suffix
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -536,7 +773,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
 // EJECUCIÓN PRINCIPAL
 // ==========================================
 
-(async function main() {
+async function main() {
   try {
     console.log('📖 Iniciando parser de devocionales...\n');
     console.log(`⚙️  Fuente de datos: ${CONFIG.jsonSource}`);
@@ -552,9 +789,7 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     console.log();
 
     // Crear directorio de salida si no existe
-    if (!fs.existsSync(CONFIG.outputDir)) {
-      fs.mkdirSync(CONFIG.outputDir, { recursive: true });
-    }
+    ensureDirExists(CONFIG.outputDir);
 
     // Copiar carpetas de dependencias al directorio de salida
     copyImagesFolder(CONFIG.outputDir);
@@ -606,6 +841,12 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
 
     // SEGUNDA PASADA: Generar HTML con navegación (en paralelo, lotes de 2)
     console.log('🔨 Generando archivos HTML...\n');
+    const processingSummary = {
+      changedOrNew: [],
+      unchanged: [],
+      missingRemoteHash: [],
+      errors: []
+    };
 
     // Crear una instancia de navegador compartida si se generan imágenes
     let sharedBrowser = null;
@@ -632,6 +873,46 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
         console.log(`[${index + 1}/${total}] Procesando: ${metadata.title}`);
 
         const outputPath = path.join(CONFIG.outputDir, metadata.htmlFile);
+        const audioFilename = `${metadata.dateSlug}.mp3`;
+        const audioBaseUrl = CONFIG.audioServerUrl.replace(/\/+$/, '');
+        const audioUrl = `${audioBaseUrl}/${audioFilename}`;
+        const audioPath = path.join(CONFIG.outputDir, audioFilename);
+        const localHashPath = resolveLocalHashPaths(CONFIG.outputDir, metadata.dateSlug);
+
+        let hashState;
+        try {
+          hashState = await evaluateHashSyncState({
+            audioServerUrl: CONFIG.audioServerUrl,
+            dateSlug: metadata.dateSlug,
+            hashSuffixes: CONFIG.audioHashSuffixes,
+            localHashPath
+          });
+        } catch (hashError) {
+          console.warn(`   ⚠️  No se pudo obtener hash remoto: ${hashError.message}`);
+          return;
+        }
+
+        const plan = buildProcessingPlan({
+          hashState,
+          generateImagesEnabled: CONFIG.generateImages,
+          downloadAudioEnabled: CONFIG.downloadAudio
+        });
+
+        if (!plan.shouldProcess) {
+          if (plan.reason === 'missing_remote_hash') {
+            processingSummary.missingRemoteHash.push(metadata.dateSlug);
+            console.log(`   ⏭️  Hash remoto no disponible, se omite actualización completa (${metadata.dateSlug})`);
+          } else {
+            processingSummary.unchanged.push(metadata.dateSlug);
+            console.log(`   ⏭️  Hash sin cambios, se omite actualización completa (${metadata.dateSlug})`);
+          }
+          return;
+        }
+
+        if (plan.reason === 'hash_changed_or_new') {
+          processingSummary.changedOrNew.push(metadata.dateSlug);
+          console.log(`   🔄 Hash nuevo/diferente detectado, reprocesando todo para ${metadata.dateSlug}`);
+        }
 
         // Determinar devocional anterior y siguiente
         const prevDevotional = index < sortedMetadata.length - 1 ? sortedMetadata[index + 1] : null;
@@ -640,40 +921,53 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
         // Generar HTML con navegación
         const html = parseDevotional(post, template, metadata.dateSlug, prevDevotional, nextDevotional);
 
-        // Guardar archivo HTML
-        fs.writeFileSync(outputPath, html, 'utf8');
-        console.log(`   ✅ HTML guardado: ${metadata.htmlFile}`);
+        // Guardar HTML solo cuando cambia hash remoto
+        if (plan.processHtml) {
+          ensureParentDir(outputPath);
+          fs.writeFileSync(outputPath, html, 'utf8');
+          console.log(`   ✅ HTML actualizado: ${metadata.htmlFile}`);
+        }
 
         // Generar imagen si está habilitado
-        if (CONFIG.generateImages) {
+        if (plan.processImage) {
           const imagePath = path.join(CONFIG.outputDir, `${metadata.dateSlug}.png`);
+          ensureParentDir(imagePath);
           console.log(`   🖼️  Generando imagen...`);
           await generateImageFromHtml(outputPath, imagePath, CONFIG.imageWidth, sharedBrowser);
           console.log(`   ✅ Imagen guardada: ${metadata.dateSlug}.png`);
         }
 
         // Descargar audio si está habilitado
-        if (CONFIG.downloadAudio) {
-          const audioFilename = `${metadata.dateSlug}.mp3`;
-          const audioUrl = `${CONFIG.audioServerUrl}${audioFilename}`;
-          const audioPath = path.join(CONFIG.outputDir, audioFilename);
-
-          // Verificar si el archivo ya existe
-          if (fs.existsSync(audioPath)) {
-            console.log(`   ⏭️  Audio ya existe: ${audioFilename}`);
+        if (plan.processAudio) {
+          ensureParentDir(audioPath);
+          console.log(`   🎵 Descargando audio...`);
+          const downloaded = await downloadAudioFile(audioUrl, audioPath);
+          if (downloaded) {
+            console.log(`   ✅ Audio guardado: ${audioFilename}`);
           } else {
-            console.log(`   🎵 Descargando audio...`);
-            const downloaded = await downloadAudioFile(audioUrl, audioPath);
-
-            if (downloaded) {
-              console.log(`   ✅ Audio guardado: ${audioFilename}`);
-            } else {
-              console.log(`   ⚠️  Audio no disponible en servidor`);
-            }
+            console.log(`   ⚠️  Audio no disponible en servidor`);
           }
         }
 
+        const primaryHashSaved = plan.shouldSaveHash
+          ? saveHashIfChanged(localHashPath.primary, hashState.remoteHash)
+          : false;
+        const legacyHashSaved = plan.shouldSaveHash
+          ? saveHashIfChanged(localHashPath.legacy, hashState.remoteHash)
+          : false;
+        if (primaryHashSaved || legacyHashSaved) {
+          const savedNames = [];
+          if (primaryHashSaved) savedNames.push(path.basename(localHashPath.primary));
+          if (legacyHashSaved) savedNames.push(path.basename(localHashPath.legacy));
+          console.log(`   ✅ Hash actualizado: ${savedNames.join(', ')}`);
+        }
+
       } catch (error) {
+        processingSummary.errors.push({
+          dateSlug: metadata.dateSlug,
+          title: post.title && post.title.rendered ? post.title.rendered : metadata.title,
+          message: error.message
+        });
         console.error(`   ❌ Error procesando "${post.title.rendered}":`, error.message);
       }
     };
@@ -703,8 +997,12 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
       bannerImage: m.bannerImage,
       cssVariant: m.cssVariant
     }));
-    fs.writeFileSync(metadataPath, JSON.stringify(metadataForJson, null, 2), 'utf8');
-    console.log(`\n✅ Metadata guardada: devotionals-metadata.json`);
+    const metadataChanged = writeFileIfChanged(metadataPath, JSON.stringify(metadataForJson, null, 2));
+    if (metadataChanged) {
+      console.log(`\n✅ Metadata actualizada: devotionals-metadata.json`);
+    } else {
+      console.log(`\n⏭️  Metadata sin cambios: devotionals-metadata.json`);
+    }
 
     // Generar index.html desde el template
     const indexTemplatePath = path.join(__dirname, 'index-template.html');
@@ -714,8 +1012,36 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
       indexTemplate = indexTemplate.replace(/\{\{SITE_BASE_URL\}\}/g, siteBaseUrl);
       indexTemplate = indexTemplate.replace('{{DEVOTIONALS_JSON}}', JSON.stringify(metadataForJson, null, 2));
       const indexOutputPath = path.join(CONFIG.outputDir, 'index.html');
-      fs.writeFileSync(indexOutputPath, indexTemplate, 'utf8');
-      console.log(`✅ Index.html generado`);
+      const indexChanged = writeFileIfChanged(indexOutputPath, indexTemplate);
+      if (indexChanged) {
+        console.log(`✅ Index.html actualizado`);
+      } else {
+        console.log(`⏭️  Index.html sin cambios`);
+      }
+    }
+
+    const changedSorted = processingSummary.changedOrNew.slice().sort();
+    const unchangedSorted = processingSummary.unchanged.slice().sort();
+    const missingHashSorted = processingSummary.missingRemoteHash.slice().sort();
+    const errorsCount = processingSummary.errors.length;
+
+    console.log('\n📊 Resumen por hash');
+    console.log(`   ✅ Nuevos/cambiados: ${changedSorted.length}`);
+    if (changedSorted.length > 0) {
+      console.log(`      ${changedSorted.join(', ')}`);
+    }
+    console.log(`   ⏭️  Sin cambios: ${unchangedSorted.length}`);
+    if (unchangedSorted.length > 0) {
+      console.log(`      ${unchangedSorted.join(', ')}`);
+    }
+    console.log(`   ⚠️  Sin hash remoto: ${missingHashSorted.length}`);
+    if (missingHashSorted.length > 0) {
+      console.log(`      ${missingHashSorted.join(', ')}`);
+    }
+    console.log(`   ❌ Con error: ${errorsCount}`);
+    if (errorsCount > 0) {
+      const errorDates = processingSummary.errors.map((item) => item.dateSlug).sort();
+      console.log(`      ${errorDates.join(', ')}`);
     }
 
     console.log('\n🎉 ¡Proceso completado!');
@@ -737,4 +1063,22 @@ function parseDevotional(postData, template, dateSlug, prevDevotional = null, ne
     console.error('❌ Error fatal:', error.message);
     process.exit(1);
   }
-})();
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  normalizeHashValue,
+  writeFileIfChanged,
+  saveHashIfChanged,
+  shouldForceRebuildForHash,
+  resolveLocalHashPaths,
+  readLocalHash,
+  buildProcessingPlan,
+  evaluateHashSyncState,
+  fetchRemoteAudioHash,
+  parseDevotional,
+  main
+};

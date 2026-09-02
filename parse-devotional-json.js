@@ -10,6 +10,7 @@
  * - DEVO_GENERATE_IMAGES: Generar imágenes PNG (default: false, valores: true/false)
  * - DEVO_IMAGE_WIDTH: Ancho de la imagen (default: 1920)
  * - DEVO_AUDIO_SERVER_URL: URL del servidor de audio (default: https://cenfolic.com/audio/devo/)
+ * - DEVO_CONTENT_HASH_SERVER_URL: URL de hashes canónicos (default: https://cenfolic.com/content-hashes/devo/)
  * - DEVO_AUDIO_HASH_SUFFIXES: Sufijos de hash remoto separados por coma (default: .hash,.mp3.hash)
  * - DEVO_DOWNLOAD_AUDIO: Descargar archivos de audio localmente (default: false, valores: true/false)
  */
@@ -67,6 +68,7 @@ if (GENERATE_IMAGES) {
 // ==========================================
 const DOWNLOAD_AUDIO = process.env.DEVO_DOWNLOAD_AUDIO === 'true';
 const CENFOLIC_BASE_URL = (process.env.DEVO_CENFOLIC_BASE_URL || 'https://cenfolic.com').replace(/\/+$/, '');
+const CONTENT_HASH_SERVER_URL = process.env.DEVO_CONTENT_HASH_SERVER_URL || `${CENFOLIC_BASE_URL}/content-hashes/devo/`;
 const AUDIO_HASH_SUFFIXES = (process.env.DEVO_AUDIO_HASH_SUFFIXES || '.hash,.mp3.hash')
   .split(',')
   .map((value) => value.trim())
@@ -80,6 +82,7 @@ const CONFIG = {
   generateImages: GENERATE_IMAGES && puppeteer !== undefined,
   imageWidth: parseInt(process.env.DEVO_IMAGE_WIDTH || '1080', 10),
   audioServerUrl: process.env.DEVO_AUDIO_SERVER_URL || `${CENFOLIC_BASE_URL}/audio/devo/`,
+  contentHashServerUrl: CONTENT_HASH_SERVER_URL,
   audioHashSuffixes: AUDIO_HASH_SUFFIXES,
   downloadAudio: DOWNLOAD_AUDIO
 };
@@ -457,11 +460,16 @@ function buildProcessingPlan({ hashState, generateImagesEnabled, downloadAudioEn
 /**
  * Evalúa el estado de hash para decidir si se reprocesa una fecha.
  */
-async function evaluateHashSyncState({ audioServerUrl, dateSlug, hashSuffixes, localHashPath }) {
+async function evaluateHashSyncState({ contentHashServerUrl, audioServerUrl, dateSlug, hashSuffixes, localHashPath }) {
   const localHash = readLocalHash(localHashPath.primary, localHashPath.legacy);
 
   let remoteHash = null;
-  const remoteHashData = await fetchRemoteAudioHash(audioServerUrl, dateSlug, hashSuffixes);
+  const remoteHashData = await fetchRemoteContentHash(
+    contentHashServerUrl,
+    audioServerUrl,
+    dateSlug,
+    hashSuffixes
+  );
   if (remoteHashData && remoteHashData.hash) {
     remoteHash = remoteHashData.hash;
   }
@@ -482,6 +490,33 @@ async function evaluateHashSyncState({ audioServerUrl, dateSlug, hashSuffixes, l
     remoteHash,
     localHash
   };
+}
+
+/**
+ * Busca primero el hash canónico basado en HTML y conserva como fallback los
+ * hashes antiguos publicados junto al MP3.
+ */
+async function fetchRemoteContentHash(contentHashServerUrl, audioServerUrl, dateSlug, legacyHashSuffixes) {
+  const contentHashBaseUrl = contentHashServerUrl.replace(/\/+$/, '');
+  const canonicalUrl = `${contentHashBaseUrl}/${dateSlug}.hash`;
+  const canonicalRawHash = await downloadTextFile(canonicalUrl);
+  const canonicalHash = normalizeHashValue(canonicalRawHash);
+
+  if (canonicalHash) {
+    return {
+      hash: canonicalHash,
+      url: canonicalUrl,
+      source: 'content'
+    };
+  }
+
+  const legacyHash = await fetchRemoteAudioHash(
+    audioServerUrl,
+    dateSlug,
+    legacyHashSuffixes
+  );
+
+  return legacyHash ? { ...legacyHash, source: 'legacy-audio' } : null;
 }
 
 /**
@@ -780,6 +815,7 @@ async function main() {
     console.log(`⚙️  Template: ${CONFIG.templatePath}`);
     console.log(`⚙️  Directorio de salida: ${CONFIG.outputDir}`);
     console.log(`⚙️  Servidor de audio: ${CONFIG.audioServerUrl}`);
+    console.log(`⚙️  Servidor de hashes: ${CONFIG.contentHashServerUrl}`);
     if (CONFIG.downloadAudio) {
       console.log(`⚙️  Descarga de audio: Activada`);
     }
@@ -882,6 +918,7 @@ async function main() {
         let hashState;
         try {
           hashState = await evaluateHashSyncState({
+            contentHashServerUrl: CONFIG.contentHashServerUrl,
             audioServerUrl: CONFIG.audioServerUrl,
             dateSlug: metadata.dateSlug,
             hashSuffixes: CONFIG.audioHashSuffixes,
@@ -952,13 +989,9 @@ async function main() {
         const primaryHashSaved = plan.shouldSaveHash
           ? saveHashIfChanged(localHashPath.primary, hashState.remoteHash)
           : false;
-        const legacyHashSaved = plan.shouldSaveHash
-          ? saveHashIfChanged(localHashPath.legacy, hashState.remoteHash)
-          : false;
-        if (primaryHashSaved || legacyHashSaved) {
+        if (primaryHashSaved) {
           const savedNames = [];
           if (primaryHashSaved) savedNames.push(path.basename(localHashPath.primary));
-          if (legacyHashSaved) savedNames.push(path.basename(localHashPath.legacy));
           console.log(`   ✅ Hash actualizado: ${savedNames.join(', ')}`);
         }
 
@@ -1078,6 +1111,7 @@ module.exports = {
   readLocalHash,
   buildProcessingPlan,
   evaluateHashSyncState,
+  fetchRemoteContentHash,
   fetchRemoteAudioHash,
   parseDevotional,
   main
